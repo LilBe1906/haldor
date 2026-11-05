@@ -1113,7 +1113,7 @@ function knightUpd(e){
  }}
 upd.lord=knightUpd;upd.jarl=knightUpd;upd.exec=knightUpd;
 const FORMS={troll:['GRUCHACZ ROZWŚCIECZONY'],witch:['MORWENA, KRÓLOWA MROKU'],worm:['GNILEC — PRZEBUDZONY POŻERACZ'],jarl:['HROFT, ZIMOWE SERCE'],exec:['MORAG — KAT BEZ GŁOWY'],lord:['LORD PŁONĄCY','LORD SKRZYDLATY','POPIÓŁ — PRAWDZIWA POSTAĆ']};
-function transformBoss(e){e.form=(e.form||1)+1;e.hp=1;e.state='transform';e.t=0;e.invuln=true;e.vx=0;e.vy=0;shots=[];shake=18;flashT=16;sfx('roar');setTimeout(()=>sfx('boom'),400);
+function transformBoss(e){e.burn=0;e.slow=0;e.form=(e.form||1)+1;e.hp=1;e.state='transform';e.t=0;e.invuln=true;e.vx=0;e.vy=0;shots=[];shake=18;flashT=16;sfx('roar');setTimeout(()=>sfx('boom'),400);
  const n=e.mini?e.name+' — WŚCIEKŁY':FORMS[e.type]?FORMS[e.type][e.form-2]:e.name;e.name=n;banner={a:n,b:e.mini?'Przeciwnik wpada w szał!':e.form>=e.forms?'Ostatnia forma!':'Przemiana!',t:160};burst(ecx(e),e.y+e.h/2,'#ffd060',40,4);
  for(const x of ents)if(x.summoned&&!x.dead)x.dead=true;}
 function finishTransform(e){if(e.mini){e.maxHp=Math.round(e.baseMax*0.6);e.hp=e.maxHp;e.invuln=false;e.dm*=1.25;e.enr=true;e.state=homeState(e);e.t=0;e.cd=20;return;}const base=e.baseMax||e.maxHp;e.baseMax=base;e.maxHp=Math.round(base*(e.type==='lord'?0.75+0.15*e.form:0.85));e.hp=e.maxHp;e.invuln=false;e.dm*=1.18;
@@ -1125,7 +1125,7 @@ function startBoss2(b){b.forms=b.type==='lord'?4:2;b.form=1;b.baseMax=b.maxHp;}
 function startBoss(){arena.started=true;lockGate(true);const t=arena.boss;
  if(arena.mini){boss=mkEnemy(t,arena.bossX*T+8,arena.row*T);const sc=t==='golem'?1.5:1.8;boss.scale=sc;boss.w=Math.round(boss.w*sc);boss.h=Math.round(boss.h*sc);boss.x=arena.bossX*T+8-boss.w/2;boss.y=arena.row*T-boss.h;
   const MI=MINIW[CUR.w][arena.mini];boss.isBoss=true;boss.mini=true;boss.name=MI[1];boss.mirror=MI[1]==='LUSTRZANY HALDOR';if(boss.state==='hang')boss.state='fly';boss.maxHp=boss.hp=Math.round(boss.maxHp*7);boss.dm*=1.3;boss.state=homeState(boss);boss.t=0;boss.cd=40;boss.forms=2;boss.form=1;boss.baseMax=boss.maxHp;boss.face=-1;boss.xp*=6;boss.gold*=6;
-  ents.push(boss);setMusic('boss');banner={a:boss.name,b:MI[2],t:150};return;}
+  boss.alpha=0;boss.fadeIn=40;dust(ecx(boss),boss.y+boss.h,14);ents.push(boss);setMusic('boss');banner={a:boss.name,b:MI[2],t:150};return;}
  boss=mkEnemy(t,arena.bossX*T+8,arena.row*T);boss.state='intro';boss.face=-1;
  if(t==='witch'){boss.ax=boss.x;boss.ay=arena.row*T-90;boss.y=boss.ay;boss.alpha=0;}
  if(t==='worm'){boss.y=arena.row*T-boss.h;}
@@ -1135,8 +1135,9 @@ function startBoss(){arena.started=true;lockGate(true);const t=arena.boss;
 
 function homeState(e){const A=ETYPES[e.type].ai;return (A==='flyer'||A==='diver')?'fly':A==='thrower'?'aim':A==='turret'?'patrol':A==='brawler'?'chase':e.type==='bat'||e.type==='gargoyle'?'fly':e.type==='shaman'?'idle':e.type==='bomber'?'aim':e.type==='archer'?'kite':e.type==='wolf'?'stalk':e.type==='toad'?'aim':e.type==='cultist'?'idle':e.type==='wraith'?'float':e.type==='imp'?'hop':'chase';}
 function updEnemy(e){
+ if(e.fadeIn>0){e.fadeIn--;e.alpha=1-e.fadeIn/40;e.invuln=e.fadeIn>0;if(e.fadeIn===0)e.alpha=undefined;e.t=0;return;}
  e.t++;if(e.flash>0)e.flash--;if(e.slow>0)e.slow--;
- if(e.burn>0){e.burn--;if(e.burn%20===0){const d=Math.max(1,Math.round(baseDmg()*0.15));e.hp-=d;ftext(ecx(e),e.y,d,'#ff9040');if(e.hp<=0){if(e.isBoss&&(e.form||1)<(e.forms||1))transformBoss(e);else{killEnemy(e);return;}}}if(frame%4===0)parts.push({x:ecx(e)+rand(-4,4),y:e.y+rand(0,e.h),vx:0,vy:-0.8,life:16,max:16,c:'#ff8030',s:2,g:0});}
+ if(e.burn>0&&(e.invuln||e.state==='transform'))e.burn=0;if(e.burn>0){e.burn--;if(e.burn%20===0){const d=Math.max(1,Math.round(baseDmg()*0.15));e.hp-=d;ftext(ecx(e),e.y,d,'#ff9040');if(e.hp<=0){if(e.isBoss&&(e.form||1)<(e.forms||1))transformBoss(e);else{killEnemy(e);return;}}}if(frame%4===0)parts.push({x:ecx(e)+rand(-4,4),y:e.y+rand(0,e.h),vx:0,vy:-0.8,life:16,max:16,c:'#ff8030',s:2,g:0});}
  if(!e.isBoss&&Math.abs(ecx(e)-(cam.x+VW/2))>VW*0.9&&e.state!=='dive')return;
  if(e.state==='hurt'){e.vx*=0.85;if(e.type==='bat'||e.type==='wraith'){e.vy*=0.85;e.x+=e.vx;e.y+=e.vy;}if(e.t>=14){e.t=0;
   e.state=homeState(e);
@@ -1395,7 +1396,7 @@ function respawn(){
  if(bag&&bag.gi===gi())items.push({type:'bag',x:bag.x-5,y:bag.y-9,w:10,h:9,gold:bag.gold,static:true});
  state='play';}
 function gameOverRestart(){P.lives=3;P.dead=false;bag=null;loadStage(gi());}
-function killEnemy(e){
+function killEnemy(e){if(e.isBoss&&(e.state==='transform'||(e.form||1)<(e.forms||1))){if(e.state!=='transform')transformBoss(e);return;}
  e.dead=true;PROF.stats.kills++;stageKills++;burst(ecx(e),e.y+e.h/2,'#a33',14,2.5);burst(ecx(e),e.y+e.h/2,'#eee',8,1.5);
  gainXP(e.xp);gainMastery(e.lastArm||P.arm,e.xp);if(!e.isBoss&&!e.mini&&Math.random()<(ETYPES[e.type].hp>=60?0.35:0.12)*(P.skills.orefind?2:1)*(hasT('talore')?1.4:1)*(1+0.1*(P.skills.luckN||0)))items.push({type:'ore',x:ecx(e)-5,y:e.y,w:10,h:8,vx:rand(-1,1),vy:-2.5,t:0});ftext(ecx(e),e.y-10,'+'+e.xp+' XP','#8fd0ff');dropCoins(ecx(e),e.y+e.h/2,e.gold);
  if(e.type==='slime'&&!e.mini){for(const d of [-1,1]){const m=mkEnemy('slime',ecx(e)+d*6,e.y+e.h);m.w=9;m.h=7;m.x=ecx(e)+d*6-4;m.y=e.y+e.h-7;m.mini=true;m.maxHp=m.hp=Math.round(m.maxHp*0.4);m.xp=3;m.gold=1;m.state='chase';m.vy=-3;m.vx=d*1.5;ents.push(m);}}
@@ -2381,7 +2382,7 @@ function drawCamp(){
 function updCam(){if(CUR.mode==='sky'||CUR.mode==='stone'){cam.vx=CUR.mode==='sky'?1.4:2.1;cam.x=Math.min(MW*T-VW,Math.max(cam.x+(CUR.mode==='sky'?cam.vx:0),CUR.mode==='stone'?P.x-120:cam.x));cam.y=0;if(CUR.mode==='sky')P.x=Math.min(P.x,cam.x+VW-16);return;}
  if(CUR.mode==='raft'){const r=raftOf();if(r){cam.x=clamp(r.x-120,0,MW*T-VW);cam.y=clamp(P.y-VH/2,0,Math.max(0,MH*T-VH));P.x=clamp(P.x,cam.x+2,cam.x+VW-14);return;}}const tx=P.x+P.w/2-VW/2+P.face*26,ty=P.y+P.h/2-VH/2-(CUR.tower?40:14);cam.x+=(tx-cam.x)*0.09;cam.y+=(ty-cam.y)*0.1;
  cam.x=CUR.tower?(MW*T-VW)/2:clamp(cam.x,0,Math.max(0,MW*T-VW));cam.y=clamp(cam.y,0,Math.max(0,MH*T-VH));
- if(arena&&arena.started&&!bossDone)cam.x=clamp(cam.x,arena.gate*T-4,Math.max(arena.gate*T-4,(arena.x1+2)*T-VW));}
+ if(arena&&arena.started&&!bossDone){const cl=clamp(cam.x,arena.gate*T-4,Math.max(arena.gate*T-4,(arena.x1+2)*T-VW));cam.x+=clamp((cl-cam.x)*0.06,-5,5);}}
 function wheelInput(){const own=armsOwned();
  if(K.wheel){wheel.t++;if(wheel.t===1){wheel.sel=ARMS.findIndex(a=>a.id===P.arm);}if(wheel.t>10&&own.length>1)wheel.open=true;}
  else if(wheel.t>0){if(wheel.open){const A=ARMS[wheel.sel];if(own.includes(A)&&A.id!==P.arm){P.arm=A.id;sfx('sel');ftext(pcx(),P.y-8,A.n,A.c);}}
@@ -2450,7 +2451,7 @@ addEventListener('pagehide',()=>{if(slot>=0&&PROF)saveGame(state==='pause'||stat
 addEventListener('touchend',()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}},{once:true});
 let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
-window.__H={get P(){return P;},get state(){return state;},set state(v){state=v;},loadStage,newGame,get ents(){return ents;},get map(){return map;},kill:e=>killEnemy(e),get arena(){return arena;},get boss(){return boss;},go,genStage,get CUR(){return CUR;},get traps(){return traps;},get PROF(){return PROF;},mk:mkEnemy,openCamp,kill:killEnemy,dmg:e=>damageEnemy(e,99999,{kind:"wave"}),get shops(){return shops;},get DP(){return DP;},get ps(){return pshots.map(s=>[Math.round(s.vx*10)/10,Math.round(s.vy*10)/10,!!s.stuck]);},get shots(){return shots;},get lava(){return lavaY;}};
+window.__H={get P(){return P;},get state(){return state;},set state(v){state=v;},loadStage,newGame,get ents(){return ents;},get cam(){return cam;},get map(){return map;},kill:e=>killEnemy(e),get arena(){return arena;},get boss(){return boss;},go,genStage,get CUR(){return CUR;},get traps(){return traps;},get PROF(){return PROF;},mk:mkEnemy,openCamp,kill:killEnemy,dmg:e=>damageEnemy(e,99999,{kind:"wave"}),get shops(){return shops;},get DP(){return DP;},get ps(){return pshots.map(s=>[Math.round(s.vx*10)/10,Math.round(s.vy*10)/10,!!s.stuck]);},get shots(){return shots;},get lava(){return lavaY;}};
 (document.fonts&&document.fonts.load?Promise.race([document.fonts.load(`400 12px ${FONT}`),new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(()=>{go('title');});
 requestAnimationFrame(loop);
 
