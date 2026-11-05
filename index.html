@@ -2425,6 +2425,7 @@ function loop(now){requestAnimationFrame(loop);let dt=now-last;last=now;if(dt>10
  const show=isTouch&&state==='play'&&lastInput!=='pad';if(show!==touchShown){touchDiv.style.display=show?'block':'none';touchShown=show;}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'){state='pause';uiSel=0;}if(document.hidden&&slot>=0&&PROF&&state!=='title')saveGame(state==='pause'||state==='play');});
 addEventListener('pagehide',()=>{if(slot>=0&&PROF)saveGame(state==='pause'||state==='play'||state==='camp');});
+addEventListener('touchend',()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}},{once:true});
 let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 window.__H={get P(){return P;},get state(){return state;},set state(v){state=v;},loadStage,newGame,get ents(){return ents;},get arena(){return arena;},get boss(){return boss;},go,genStage,get CUR(){return CUR;},get traps(){return traps;},get PROF(){return PROF;},mk:mkEnemy,openCamp,kill:killEnemy,dmg:e=>damageEnemy(e,99999,{kind:"wave"}),get shops(){return shops;},get DP(){return DP;},get ps(){return pshots.map(s=>[Math.round(s.vx*10)/10,Math.round(s.vy*10)/10,!!s.stuck]);},get shots(){return shots;},get lava(){return lavaY;}};
