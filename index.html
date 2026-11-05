@@ -43,7 +43,7 @@ const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const VW=400,VH=225,T=16,SC=3;
 cv.width=VW*SC; cv.height=VH*SC; ctx.imageSmoothingEnabled=false;
 function fit(){const r=Math.min(innerWidth/VW,innerHeight/VH);cv.style.width=Math.floor(VW*r)+'px';cv.style.height=Math.floor(VH*r)+'px';}
-addEventListener('resize',fit); fit();
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,250));if(window.visualViewport)visualViewport.addEventListener('resize',fit);addEventListener('load',()=>setTimeout(fit,300)); fit();
 const lc=document.createElement('canvas'); lc.width=cv.width; lc.height=cv.height; const lx=lc.getContext('2d');
 const FONT='"VT323", monospace';
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>v<a?a:v>b?b:v;

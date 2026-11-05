@@ -1,9 +1,14 @@
 {
  "name": "Haldor: Ostatni z Wygnanych",
  "short_name": "Haldor",
- "start_url": "./",
+ "id": "./",
+ "start_url": "./index.html",
  "scope": "./",
- "display": "fullscreen",
+ "display": "standalone",
+ "display_override": [
+  "fullscreen",
+  "standalone"
+ ],
  "orientation": "landscape",
  "background_color": "#0a0608",
  "theme_color": "#140c10",
