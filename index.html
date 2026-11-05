@@ -591,7 +591,8 @@ function genStage(gi){
   step(){let d=pick([-2,-1,1,2]);if(h<=8)d=Math.abs(d);if(h>=14)d=-Math.abs(d);const nh=clamp(h+d,6,14),n=ri(5,8);flat(n,nh);h=nh;if(ch(0.5))foes(x+2,x+n-2,h,1);x+=n;},
   gap(){let gw=ri(3,tier>0.02?5:4);let nh=clamp(h+ri(-1,1),6,14);if(gw>=4)nh=Math.max(nh,h);if(gw>=5)nh=h;pit(x,x+gw-1);x+=gw;const n=ri(4,7);flat(n,nh);h=nh;if(ch(0.35))foes(x+1,x+n-2,h,1);x+=n;},
   spikes(){if(h>=15){C.flat();return;}const n=ri(8,13);ground(x,x+n-1,h+1);rect(x,h,x+n-1,h,'^');let px=x+1;
-   while(px<x+n-2){const py=clamp(h-ri(1,3),4,15),pw=ri(1,3);if(ch(0.3+tier*0.4))crum(px,px+pw-1,py);else plat(px,px+pw-1,py);if(ch(0.3))E('coin',px,py-1);px+=pw+ri(1,3);}
+   let le=x;while(px<x+n-3){const py=clamp(h-ri(1,3),4,15),pw=ri(2,3);if(ch(0.3+tier*0.4))crum(px,px+pw-1,py);else plat(px,px+pw-1,py);if(ch(0.3))E('coin',px,py-1);le=px+pw-1;px+=pw+ri(1,2);}
+   if(le<x+n-3)plat(x+n-3,x+n-2,clamp(h-1,4,15));
    if(ch(0.5)&&pool.includes('bat'))E('bat',x+(n>>1),h-6);x+=n;},
   crumble(){const n=ri(7,10+Math.floor(tier*4));pit(x,x+n-1);crum(x,x+n-1,h);if(ch(0.5)&&pool.includes('bat'))E('bat',x+(n>>1),h-5);x+=n;const m=ri(4,6);flat(m,h);x+=m;},
   platforms(){const n=ri(11,15);flat(n,h);const r1=Math.max(4,h-3),r2=Math.max(4,h-6);plat(x+2,x+5,r1);plat(x+7,x+10,r2);coins(x+7,x+10,r2-1);
@@ -714,7 +715,7 @@ function moveX(e,dx){
 function moveY(e,dy){
  const oldBot=e.y+e.h;e.y+=dy;const l=Math.floor(e.x/T),r=Math.floor((e.x+e.w-0.01)/T);e.onGround=false;
  if(dy>=0){const ty=Math.floor((e.y+e.h)/T);for(let tx=l;tx<=r;tx++){const c=tile(tx,ty);
-  if(solidAt(tx,ty)||(c==='='&&oldBot<=ty*T+0.5&&!(e.dropT>0))){e.y=ty*T-e.h;e.vy=0;e.onGround=true;return true;}}}
+  if(solidAt(tx,ty)||((c==='='||(e===P&&!P.climb&&c==='H'&&tile(tx,ty-1)!=='H'))&&oldBot<=ty*T+0.5&&!(e.dropT>0))){e.y=ty*T-e.h;e.vy=0;e.onGround=true;return true;}}}
  else{const ty=Math.floor(e.y/T);for(let tx=l;tx<=r;tx++)if(solidAt(tx,ty)){e.y=(ty+1)*T;e.vy=0;if(e.grav<0)e.onGround=true;return true;}}
  return false;
 }
@@ -1312,7 +1313,8 @@ function updPlayer(){
  // drabina
  const onLad=tile(Math.floor(pcx()/T),Math.floor((p.y+p.h-4)/T))==='H'||tile(Math.floor(pcx()/T),Math.floor((p.y+6)/T))==='H';
  if(onLad&&(K.up||K.down)&&!p.climb&&p.dashT<=0){p.climb=true;p.atk=null;}
- if(p.climb){if(!onLad||pr('jump')){p.climb=false;if(pr('jump')){p.vy=-4.5;p.jbuf=0;}}else{p.vx=0;p.vy=(K.up?-1.6:0)+(K.down?1.6:0);p.x+=(Math.floor(pcx()/T)*T+8-pcx())*0.3;moveY(p,p.vy);if(K.down&&p.onGround)p.climb=false;p.anim+=Math.abs(p.vy)*0.2;p.airDash=maxAirDash();if(frame%8===0&&p.vy)sfx('sel');
+ if(!p.climb&&K.down&&p.onGround&&p.dashT<=0){const lx=Math.floor(pcx()/T),ly=Math.floor((p.y+p.h+2)/T);if(tile(lx,ly)==='H'){p.climb=true;p.atk=null;p.crouch=false;p.x+=(lx*T+8-pcx());p.y+=4;}}
+ if(p.climb){if(!onLad||pr('jump')){p.climb=false;if(pr('jump')){p.vy=-4.5;p.jbuf=0;}}else{p.vx=0;p.vy=(K.up?-1.6:0)+(K.down?1.6:0);p.x+=(Math.floor(pcx()/T)*T+8-pcx())*0.3;moveY(p,p.vy);if(K.down&&p.onGround)p.climb=false;{const cx=Math.floor(pcx()/T),fy=Math.floor((p.y+p.h)/T);if(K.up&&tile(cx,fy)==='H'&&tile(cx,fy-1)!=='H'&&p.y+p.h-fy*T<7){p.y=fy*T-p.h;p.vy=0;p.climb=false;p.onGround=true;return;}}p.anim+=Math.abs(p.vy)*0.2;p.airDash=maxAirDash();if(frame%8===0&&p.vy)sfx('sel');
   const l=Math.floor(p.y/T);if(p.vy<0&&tile(Math.floor(pcx()/T),Math.floor((p.y+p.h)/T)-1)!=='H'&&solidAt(Math.floor(pcx()/T)+1,Math.floor((p.y+p.h)/T))===false){}return;}}
  // przenoszenie przez ruchomą platformę
  if(p.plat){p.x+=p.plat.dx||0;p.y+=p.plat.dy||0;}
