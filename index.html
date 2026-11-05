@@ -761,7 +761,8 @@ function mkEnemy(type,cx,by){
   dead:false,guard:type==='brute',isBoss:!!d.boss,name:d.boss,spawn:{cx,by},burn:0,slow:0,turnT:0,seed:Math.random()*6,xp:Math.round(d.xp*(1+g*0.1)*(1+NG*0.3)),gold:Math.round(d.gold*(1+g*0.08)),
   alpha:1,onGround:false,dm:(1+g*0.055)*(1+NG*0.2),hidden:false,invuln:false,anim:0};
  e.hp=e.maxHp;return e;}
-function eHit(e,box,dmg){if(P.inv>0||P.dead)return false;if(overlap(box,P)){hurtPlayer(dmg*e.dm,ecx(e));return true;}return false;}
+function eHit(e,box,dmg){if(P.inv>0||P.dead)return false;
+ if(e.scale>1&&box!==e){const sc=e.scale,oy=box.y-e.y,nw=box.w*sc;box={x:box.x<e.x?box.x+box.w-nw:box.x,y:e.y+oy*sc,w:nw,h:box.h*sc};}if(overlap(box,P)){hurtPlayer(dmg*e.dm,ecx(e));return true;}return false;}
 function shoot(o){shots.push(Object.assign({w:6,h:6,life:240,vx:0,vy:0},o));}
 function damageEnemy(e,dmg,o={}){
  if(e.dead||e.invuln||e.hidden||(e.isBoss&&e.state==='intro'))return false;
@@ -934,7 +935,7 @@ upd.golem=e=>{const dx=pcx()-ecx(e),adx=Math.abs(dx),dir=Math.sign(dx)||1,dy=pcy
   case 'windup':e.vx=0;if(e.t>=Math.round(40*D.react)){e.state='attack';e.t=0;shake=8;sfx('boom');dust(ecx(e),e.y+e.h,10);
    for(const d of [-1,1])shoot({type:'wave',x:ecx(e)-5,y:e.y+e.h-12,w:10,h:12,vx:d*2.4,life:70,dmg:14*e.dm});}break;
   case 'attack':eHit(e,{x:e.x-10,y:e.y+6,w:e.w+20,h:e.h-6},20);if(e.t>=8){e.state='recover';e.t=0;}break;
-  case 'throwW':e.vx=0;if(e.t>=Math.round(34*D.react)){shoot({type:'rock',x:ecx(e)+e.face*10-5,y:e.y-4,w:10,h:10,vx:e.face*Math.min(4,adx/26),vy:-4,g:0.18,dmg:16*e.dm,life:200});sfx('heavy');e.state='recover';e.t=0;}break;
+  case 'throwW':e.vx=0;if(e.t>=Math.round(34*D.react)){{const sx=ecx(e)+e.face*10,sy=e.y-4,gg=0.18,tt=clamp(adx/3,22,50);shoot({type:'rock',x:sx-5,y:sy,w:10,h:10,vx:(pcx()-sx)/tt,vy:(pcy()-sy-0.5*gg*tt*tt)/tt,g:gg,dmg:16*e.dm,life:200});}sfx('heavy');e.state='recover';e.t=0;}break;
   case 'recover':e.vx=0;if(e.t>=50){e.state='chase';e.t=0;e.cd=Math.round(60*D.react);}break;
  }};
 upd.slime=e=>{const dx=pcx()-ecx(e),adx=Math.abs(dx),dir=Math.sign(dx)||1;
@@ -976,7 +977,7 @@ upd.gargoyle=e=>{const dx=pcx()-ecx(e),dy=pcy()-(e.y+e.h/2),d=Math.hypot(dx,dy);
   case 'hang':e.vx=0;e.vy=0;e.stone=true;if(d<120&&los(ecx(e),e.y+4,pcx(),pcy())){e.state='fly';e.t=0;e.stone=false;sfx('crack');}break;
   case 'fly':{const tx=pcx()-e.w/2+(dx>0?-50:50),ty=P.y-46;e.vx+=clamp((tx-e.x)*0.01,-0.14,0.14);e.vy+=clamp((ty-e.y)*0.01,-0.14,0.14);e.vx*=0.95;e.vy*=0.95;
    if(e.t>Math.round(90*D.react)&&attackers<D.tok){e.state='screech';e.t=0;attackers++;}break;}
-  case 'screech':e.vx*=0.8;e.vy*=0.8;if(e.t>=Math.round(18*D.react)){e.vx=Math.sign(dx)*1.5;e.vy=4.2;e.state='dive';e.t=0;}break;
+  case 'screech':e.vx*=0.8;e.vy*=0.8;if(e.t>=Math.round(18*D.react)){const fr=Math.max(8,(pcy()-(e.y+e.h/2))/4.2);e.vx=clamp(dx/fr,-4,4);e.vy=4.2;e.state='dive';e.t=0;}break;
   case 'dive':eHit(e,e,14);if(e.bonk||e.t>40){e.state='perch';e.t=0;e.stone=true;shake=Math.max(shake,3);}break;
   case 'perch':e.vx=0;e.vy=0;if(e.t>=Math.round(70*D.react)){e.state='fly';e.t=0;e.stone=false;}break;
  }};
@@ -1156,7 +1157,7 @@ function updShots(){
   if(s.type==='wisp'){const a=Math.atan2(pcy()-(s.y+4),pcx()-(s.x+4)),cur=Math.atan2(s.vy,s.vx);let da=a-cur;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;const na=cur+clamp(da,-0.035,0.035);s.vx=Math.cos(na)*s.sp;s.vy=Math.sin(na)*s.sp;}
   if(s.type==='bomb'){s.fuse--;const gy=solidAt(Math.floor((s.x+3)/T),Math.floor((s.y+7)/T));if(gy){s.vx*=0.6;s.vy=0;s.g=0;}if(s.fuse<=0){s.life=0;burst(s.x+3,s.y+3,'#ffb050',22,3);sfx('boom');shake=6;if(Math.hypot(pcx()-s.x,pcy()-s.y)<34)hurtPlayer(s.dmg,s.x,{});for(const e of ents)if(!e.dead&&Math.hypot(ecx(e)-s.x,e.y+e.h/2-s.y)<30)damageEnemy(e,20,{kind:'wave'});}continue;}
   if(s.g)s.vy+=s.g;
-  if(s.type==='rock'||s.type==='ember'||s.type==='ice')s.vy=Math.min(6,s.vy+0.25);
+  if((s.type==='rock'||s.type==='ember'||s.type==='ice')&&!s.g)s.vy=Math.min(6,s.vy+0.25);
   s.x+=s.vx;s.y+=s.vy;
   if(s.type==='wave'||s.type==='fire'||s.type==='frost'){const fx=s.vx>0?s.x+s.w:s.x;if(solidAt(Math.floor(fx/T),Math.floor((s.y+s.h-2)/T))||fx<arena.px0||fx>arena.px1)s.life=0;
    if(frame%2===0)parts.push({x:s.x+rand(0,s.w),y:s.y+rand(0,s.h),vx:0,vy:-1,life:14,max:14,c:s.type==='fire'?'#ff9030':s.type==='frost'?'#cff':'#8a7a5a',s:2,g:0});}
@@ -1382,7 +1383,7 @@ function respawn(){
  shots=[];pshots=[];ents=ents.filter(e=>!e.isBoss&&!e.summoned);
  for(let i=0;i<ents.length;i++){const e=ents[i];if(!e.dead){ents[i]=mkEnemy(e.type,e.spawn.cx,e.spawn.by);}}
  for(const pp of props)if(pp.state!=='gone'){pp.state='hang';pp.y=pp.y0;pp.vy=0;pp.t=0;}
- resetTraps();const rf=raftOf();if(rf){rf.x=rf.x0;}if(CUR.mode==='deep')initDeep();if(CUR.flags.lava)lavaY=checkpoint.y+140;
+ resetTraps();const rf=raftOf();if(rf){rf.x=rf.x0;rf.go=false;}if(CUR.mode==='deep')initDeep();if(CUR.flags.lava)lavaY=checkpoint.y+140;
  if(arena&&arena.started&&!bossDone){lockGate(false);arena.started=false;boss=null;setMusic(CUR.arch==='mixed'||CUR.arch==='tutorial'||CUR.boss?theme:theme+'_'+CUR.arch);}
  if(bag&&bag.gi===gi())items.push({type:'bag',x:bag.x-5,y:bag.y-9,w:10,h:9,gold:bag.gold,static:true});
  state='play';}
@@ -1436,7 +1437,7 @@ function updTraps(){
    else if(t.state==='slam'){t.vy=Math.min(9,(t.vy||0)+0.9);t.y+=t.vy;if(overlap({x:t.x+2,y:t.y,w:t.w-4,h:t.h},P))lethalHit(t.x+t.w/2);if(t.y+t.h>=t.gy){t.y=t.gy-t.h;t.state='wait';t.t=0;shake=Math.max(shake,5);sfx('boom');dust(t.x+t.w/2,t.gy,8);}}
    else if(t.state==='wait'){if(t.t>50){t.state='rise';}}
    else if(t.state==='rise'){t.y-=0.8;if(t.y<=t.y0){t.y=t.y0;t.state='up';t.t=0;}}}
-  else if(t.k==='raft'){const nx=t.x<t.end?Math.min(t.end,t.x+t.sp):t.x;t.dx=nx-t.x;t.dy=Math.sin(f*0.06)*0.15;t.x=nx;t.y+=t.dy;
+  else if(t.k==='raft'){if(!t.go&&P.onGround&&!P.dead&&P.x+P.w>t.x&&P.x<t.x+t.w&&Math.abs(P.y+P.h-t.y)<6){t.go=true;sfx('splash');}const nx=t.go&&t.x<t.end?Math.min(t.end,t.x+t.sp):t.x;t.dx=nx-t.x;t.dy=Math.sin(f*0.06)*0.15;t.x=nx;t.y+=t.dy;
    if(P.plat!==t&&P.onGround===false&&P.y>t.y+40&&!P.dead){}}
   else if(t.k==='floe'){const nx=t.x0+Math.sin(f*0.01+t.ph)*18;t.dx=nx-t.x;t.x=nx;t.dy=0;
    if(t.state==='sink'){t.t++;if(t.t>70){t.dy=0.5;t.y+=0.5;if(t.y>t.y0+20){t.state='gone';t.t=0;}}}else if(t.state==='gone'){t.t++;if(t.t>200){t.state='idle';t.y=t.y0;t.t=0;}}}
