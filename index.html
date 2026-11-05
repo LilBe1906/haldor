@@ -20,9 +20,10 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 #dot{position:absolute;left:50%;top:50%;width:9vmin;height:9vmin;margin:-4.5vmin;border-radius:50%;background:rgba(255,210,140,.35)}
 .tb{position:absolute;pointer-events:auto;border-radius:50%;background:rgba(20,12,8,.38);border:2px solid rgba(255,215,150,.38);color:rgba(255,235,205,.88);font:700 2.5vmin "Pixelify Sans",monospace;display:flex;align-items:center;justify-content:center;letter-spacing:.05em}
 .tb.on{background:rgba(255,190,90,.38)}
+#rot{display:none}@media (orientation:portrait) and (pointer:coarse){#rot{display:flex;position:fixed;inset:0;z-index:99;background:#0a0608;color:#e8c890;font:28px VT323,monospace;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:12px}}
 </style>
 </head>
-<body>
+<body><div id="rot"><div style="font-size:64px">⟳</div>Obróć telefon poziomo</div>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="touch">
  <div id="stick"></div><div id="knob"><div id="dot"></div></div>
