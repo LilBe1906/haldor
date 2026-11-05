@@ -1135,7 +1135,7 @@ function updEnemy(e){
   e.state=homeState(e);
   if(e.type==='goblin'&&Math.random()<0.35&&!ledgeAhead(e,-Math.sign(pcx()-ecx(e)))){e.state='hop';e.vy=-3.5;e.vx=-Math.sign(pcx()-ecx(e))*2;}}}
  else if(e.state==='transform'){e.vx=0;if(e.type==='witch'||e.aiType==='witch'){}else{e.vy=Math.min(7,e.vy+0.35);moveY(e,e.vy);}if(frame%3===0)parts.push({x:ecx(e)+rand(-20,20),y:e.y+rand(0,e.h),vx:0,vy:-1.5,life:30,max:30,c:e.form>=4?'#ff4020':'#ffd060',s:3,g:0});if(e.t%30===0)shake=6;if(e.t>=130)finishTransform(e);return;}
- else{if(e.mini)attackers=Math.min(attackers,Math.max(0,D.tok-1));upd[e.aiType||e.type](e);if(e.mini&&(e.state==='chase'||e.state==='stalk'))e.vx*=1.6;}
+ else{if(e.isBoss&&e.mini)attackers=Math.min(attackers,Math.max(0,D.tok-1));upd[e.aiType||e.type](e);}
  if(e.cd>0)e.cd--;
  if(e.slow>0&&!e.isBoss)e.vx*=0.55;
  if(!e.isBoss&&!ETYPES[e.type].fly&&!e.float){const d=Math.sign(e.vx);
@@ -1145,7 +1145,7 @@ function updEnemy(e){
  if(e.type==='witch'||e.aiType==='witch'||e.type==='worm'||e.type==='wraith')return;
  if(e.float){return;}
  if(fly){e.bonk=moveX(e,e.vx);if(moveY(e,e.vy))e.bonk=true;}
- else{e.vy=Math.min(7,e.vy+0.35);moveX(e,e.vx*(e.slow>0&&e.isBoss?0.7:1));moveY(e,e.vy);}
+ else{e.vy=Math.min(7,e.vy+0.35);const bst=e.isBoss&&e.mini&&e.type==='golem'&&e.state==='chase'?1.6:1;moveX(e,clamp(e.vx*bst,-4.5,4.5)*(e.slow>0&&e.isBoss?0.7:1));moveY(e,e.vy);}
  if(e.y>MH*T+60)e.dead=true;
  if(!e.isBoss&&e.state!=='hang'){const l=Math.floor(e.x/T),r=Math.floor((e.x+e.w-1)/T),ty=Math.floor((e.y+e.h-2)/T);for(let tx=l;tx<=r;tx++){const c=tile(tx,ty);if(c==='^'||c==='~'){e.hp=0;killEnemy(e);return;}}}
 }
@@ -2429,7 +2429,7 @@ addEventListener('pagehide',()=>{if(slot>=0&&PROF)saveGame(state==='pause'||stat
 addEventListener('touchend',()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}},{once:true});
 let installEvt=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
-window.__H={get P(){return P;},get state(){return state;},set state(v){state=v;},loadStage,newGame,get ents(){return ents;},get arena(){return arena;},get boss(){return boss;},go,genStage,get CUR(){return CUR;},get traps(){return traps;},get PROF(){return PROF;},mk:mkEnemy,openCamp,kill:killEnemy,dmg:e=>damageEnemy(e,99999,{kind:"wave"}),get shops(){return shops;},get DP(){return DP;},get ps(){return pshots.map(s=>[Math.round(s.vx*10)/10,Math.round(s.vy*10)/10,!!s.stuck]);},get shots(){return shots;},get lava(){return lavaY;}};
+window.__H={get P(){return P;},get state(){return state;},set state(v){state=v;},loadStage,newGame,get ents(){return ents;},kill:e=>killEnemy(e),get arena(){return arena;},get boss(){return boss;},go,genStage,get CUR(){return CUR;},get traps(){return traps;},get PROF(){return PROF;},mk:mkEnemy,openCamp,kill:killEnemy,dmg:e=>damageEnemy(e,99999,{kind:"wave"}),get shops(){return shops;},get DP(){return DP;},get ps(){return pshots.map(s=>[Math.round(s.vx*10)/10,Math.round(s.vy*10)/10,!!s.stuck]);},get shots(){return shots;},get lava(){return lavaY;}};
 (document.fonts&&document.fonts.load?Promise.race([document.fonts.load(`400 12px ${FONT}`),new Promise(r=>setTimeout(r,1500))]):Promise.resolve()).then(()=>{go('title');});
 requestAnimationFrame(loop);
 
