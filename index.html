@@ -146,6 +146,7 @@ function nz(t,d,vol,type='highpass',f=1000,dest){
 }
 const SFX={
  jump:t=>osc('square',260,t,0.12,0.06,{slide:520,cut:3000}),
+ clink:t=>{osc('triangle',1900,t,0.08,0.025,{slide:1700});osc('square',950,t,0.05,0.012);},
  swing:t=>{nz(t,0.09,0.13,'bandpass',2400);},
  heavy:t=>{nz(t,0.14,0.18,'bandpass',1200);osc('sawtooth',120,t,0.12,0.05,{slide:60});},
  hit:t=>{nz(t,0.08,0.28,'lowpass',2200);osc('square',160,t,0.09,0.12,{slide:70});},
@@ -1626,7 +1627,7 @@ function saveGame(inStage){if(slot<0||!PROF)return;
  LS.set('haldor2_slot'+slot,JSON.stringify(data));}
 function readSlot(i){try{const d=JSON.parse(LS.get('haldor2_slot'+i));return d&&d.v>=4?d:null;}catch(e){return null;}}
 let pendDiff=1;
-function newGame(i,di,mode){slot=i;D=DIFFS[di];NG=0;P=newPlayer();PROF={done:new Array(NSTAGES).fill(false),bosses:0,seals:0,mode,hood:false,look:{hair:0,beard:0,skin:0,cape:0,armor:0},stats:{time:0,deaths:0,kills:0}};mapSel=0;bag=null;storyPage=0;go('custom');}
+function newGame(i,di,mode){slot=i;D=DIFFS[di];NG=0;P=newPlayer();PROF={done:new Array(NSTAGES).fill(false),bosses:0,seals:0,mode,hood:false,look:{hair:0,beard:0,skin:0,cape:0,outfit:0},stats:{time:0,deaths:0,kills:0}};mapSel=0;bag=null;storyPage=0;go('custom');}
 function migrate(d){if(d.done.length===NSTAGES)return;const old=d.done,nd=new Array(NSTAGES).fill(false),M=[0,1,3,5,7,8];
  old.forEach((v,i)=>{if(i===old.length-1&&old.length%6===1){nd[FINAL]=v;return;}nd[Math.floor(i/6)*STAGES_PER+M[i%6]]=v;});
  for(let w=0;w<WORLDS.length;w++){let later=false;for(let s=STAGES_PER-1;s>=0;s--){const g=w*STAGES_PER+s;if(nd[g])later=true;else if(later)nd[g]=true;}}
@@ -1674,6 +1675,7 @@ function campTabs(){
   {label:`Pokonani władcy: ${Math.min(5,PROF.bosses)}/5`,desc:`Trudność: ${D.n} · Tryb: ${PROF.mode==='classic'?'klasyczny (życia)':'ogniska'}${NG?' · Nowa Gra+ '+NG:''}`,right:'',state:'own',act:()=>{}},
   {label:`Czas gry: ${fmtTime(PROF.stats.time)}`,desc:`Pokonani wrogowie: ${PROF.stats.kills} · Śmierci: ${PROF.stats.deaths}`,right:'',state:'own',act:()=>{}}];
  const eq=GEAR_SLOTS.map(sl=>{const cur=P.gear[sl]||0,it=GEAR[sl][cur],own=P.gearOwn[sl].slice().sort((a,b)=>a-b);return {icon:'g_'+sl+'_'+cur,label:`${GEAR_SN[sl]}: ${it.n}`,desc:it.d+(own.length>1?` Masz ${own.length} rzeczy w tym miejscu. Kliknij, by zamienić.`:' Lepsze znajdziesz u kupców, w skrzyniach i u pokonanych przeciwników.'),right:own.length>1?`zamień (${own.indexOf(cur)+1}/${own.length})`:'',state:own.length>1?'can':'own',act:()=>{const k=own.indexOf(cur);P.gear[sl]=own[(k+1)%own.length];P.maxHp=calcMaxHp();P.hp=Math.min(P.hp,P.maxHp);}};});
+ eq.push({cosmetic:1,label:'Kaptur peleryny: '+(PROF.hood?'założony':'zdjęty'),desc:'Naciągnij albo zdejmij kaptur. Pod kapturem nie widać hełmu, ale jego premie dalej działają.',right:PROF.hood?'zdejmij':'załóż',state:'can',act:()=>{PROF.hood=!PROF.hood;}});
  return [{name:'UMIEJĘTNOŚCI',items:sk},{name:'KOWAL',items:fg},{name:'EKWIPUNEK',items:eq},{name:'AKCESORIA',items:tk},{name:'POSTAĆ',items:st}];
 }
 function fmtTime(fr){const s=Math.floor(fr/60),h=Math.floor(s/3600),m=Math.floor(s/60)%60;return h+'h '+String(m).padStart(2,'0')+'m';}
@@ -1693,7 +1695,7 @@ function campInput(){
  taps=[];
  const vis=7;if(menu.sel<menu.scroll)menu.scroll=menu.sel;if(menu.sel>=menu.scroll+vis)menu.scroll=menu.sel-vis+1;
 }
-function buy(it){if(!it)return;if(menu.ro){sfx('deny');showToast('To tylko podgląd. Rozwój postaci, kowal i akcesoria — przy ognisku.');return;}if(it.state==='own')return;if(it.state==='can'){it.act();sfx('buy');burst(pcx(),pcy(),'#ffe070',10,1.5);saveGame(!menu.fromMap);}else sfx('deny');}
+function buy(it){if(!it)return;if(menu.ro&&!it.cosmetic){sfx('deny');showToast('To tylko podgląd. Rozwój postaci, kowal i akcesoria — przy ognisku.');return;}if(it.state==='own')return;if(it.state==='can'){it.act();sfx('buy');burst(pcx(),pcy(),'#ffe070',10,1.5);saveGame(!menu.fromMap);}else sfx('deny');}
 function mapInput(){
  if(pr('right')&&mapSel<NSTAGES-1&&unlocked(mapSel+1)){mapSel++;sfx('sel');}
  if(pr('left')&&mapSel===FINAL){mapSel=FINAL-1;sfx('sel');return;}
@@ -1833,6 +1835,7 @@ function drawFires(){for(const f of fires){const X=f.x-cx0,Y=f.y-cy0;if(X<-30||X
  ctx.fillStyle='#4a2e18';ctx.fillRect(X-7,Y-3,14,3);ctx.fillStyle='#6a4426';ctx.fillRect(X-6,Y-4,5,2);ctx.fillRect(X+1,Y-4,5,2);ctx.fillStyle='#5a5a60';ctx.fillRect(X-9,Y-2,3,2);ctx.fillRect(X+6,Y-2,3,2);
  const s=act?1.3:1;for(let i=0;i<4;i++){const fh=(6+((frame>>2)+i*3)%5)*s,fx=X-4+i*2+((frame>>3)+i)%2;ctx.fillStyle=i%2?'#ff7a20':'#ffb030';ctx.fillRect(fx,Y-4-fh,2,fh);}
  ctx.fillStyle='#ffe890';ctx.fillRect(X-1,Y-8,2,4);if(frame%6===0)parts.push({x:X+cx0+rand(-3,3),y:Y+cy0-10,vx:rand(-0.2,0.2),vy:-0.6,life:30,max:30,c:'#ffa040',s:1,g:0});
+ drawNPC(npcSmith,f.x-26,f.y,1,frame+f.x);{const tt=(frame+f.x)%48;if(tt===30){for(let i=0;i<6;i++)parts.push({x:f.x-26+12,y:f.y-11,vx:rand(-1.2,1.2),vy:rand(-1.6,-0.4),life:16,max:16,c:Math.random()<0.5?'#ffd060':'#ff9030',s:1,g:0.08});if(Math.abs(f.x-pcx())<120)sfx('clink');}}
  lights.push({x:f.x,y:f.y-8,r:act?110:90,c:'#fa5'});
  if(Math.abs(f.x-pcx())<20&&Math.abs(f.y-(P.y+P.h))<10&&state==='play'){const l=lastInput==='touch'?'gałka w dół':lastInput==='pad'?'↓ na padzie':'↓ / E';txt(l+' — odpocznij',X,Y-34,'#ffe0a0',7,'center');}}}
 function drawExit(){if(!exitObj)return;const X=exitObj.x-cx0,Y=exitObj.y-cy0;if(X<-40||X>VW+40)return;
@@ -1846,6 +1849,7 @@ function drawShops(){for(const sh of shops){const X=Math.round(sh.x-cx0),Y=Math.
  const lit=(frame>>4)%8?'#ffd070':'#ffb050';ctx.fillStyle=lit;ctx.fillRect(X+8,Y+20,7,6);ctx.fillRect(X+33,Y+20,7,6);ctx.fillStyle='#3a2414';ctx.fillRect(X+11,Y+20,1,6);ctx.fillRect(X+36,Y+20,1,6);
  ctx.fillStyle='#8a6a3a';ctx.fillRect(X+14,Y+6,20,6);txt('KUPIEC',X+24,Y+5,'#ffe0a0',5,'center',false);
  if(frame%50===0)parts.push({x:sh.x+16,y:sh.y-2,vx:0.1,vy:-0.4,life:60,max:60,c:'rgba(180,180,180,0.5)',s:2,g:0});ctx.fillStyle='#4a3a3a';ctx.fillRect(X+38,Y-2,4,10);
+ drawNPC(npcMerchant,sh.x+38,sh.y+40,-1,frame+sh.x);
  lights.push({x:sh.x+24,y:sh.y+24,r:60,c:'#fc7'});
  if(Math.abs(sh.cx-pcx())<14&&state==='play')txt((lastInput==='pad'?'↑':'↑ / E')+' — wejdź do kupca',X+24,Y-12,'#ffe0a0',7,'center');}}
 function drawSigns(){for(const s of signs){const X=s.x-cx0,Y=s.y-cy0;if(X<-20||X>VW+20)continue;ctx.fillStyle='#5a3a20';ctx.fillRect(X-1,Y-12,2,12);ctx.fillStyle='#8a6038';ctx.fillRect(X-7,Y-18,14,8);ctx.fillStyle='#b88a50';ctx.fillRect(X-7,Y-18,14,1);ctx.fillStyle='#3a2410';ctx.fillRect(X-5,Y-15,10,1);ctx.fillRect(X-5,Y-13,7,1);}}
@@ -1866,6 +1870,30 @@ function drawProps(){for(const p of props){if(p.state==='gone')continue;const X=
  ctx.fillStyle='#0a0610';ctx.fillRect(X-1,Y-1,8,6);ctx.fillRect(X,Y+4,6,5);ctx.fillRect(X+1,Y+8,4,5);
  ctx.fillStyle='#9ad0f0';ctx.fillRect(X,Y,6,4);ctx.fillRect(X+1,Y+4,4,4);ctx.fillRect(X+2,Y+8,2,4);ctx.fillStyle='#d8f0ff';ctx.fillRect(X,Y,6,1);ctx.fillStyle='#6aa0c8';ctx.fillRect(X+4,Y+1,1,6);ctx.fillStyle='#fff';ctx.fillRect(X+1,Y,1,7);if(frame%60<4)ctx.fillRect(X+2,Y+10,1,1);}}
 
+
+
+// ===================== NPC: KUPIEC I KOWAL =====================
+function npcMerchant(e){const t=e.t||frame,bl=t%180<5,wv=(t%240)<40?Math.round(Math.sin(t*0.4)*1.5):0;
+ R(-9,6,6,12,'#6a4a2a');R(-9,6,6,1,'#8a6a40');R(-8,8,4,2,'#c8a050');R(-10,10,1,6,'#4a2e18');R(-8,12,2,2,'#a03030');R(-6,13,2,2,'#3a6ab0');R(-9,4,4,2,'#e8e0d0');R(-8,3,2,1,'#c8a050');
+ R(-4,8,9,14,'#4a2a5a');R(-4,8,2,14,'#2e1a3a');R(3,9,2,12,'#6a4a7a');R(-4,15,9,1,'#c8a050');R(0,16,2,2,'#e8c060');R(-4,21,9,1,'#2e1a3a');R(-3,22,3,2,'#2a1a10');R(2,22,3,2,'#2a1a10');
+ R(-3,1,7,7,'#d8a07a');R(-3,1,1,6,'#b07850');R(1,3,1,1,bl?'#d8a07a':'#1a1010');R(3,3,1,1,bl?'#d8a07a':'#1a1010');R(2,5,1,1,'#b07850');
+ R(-3,5,7,4,'#e8e0d0');R(-2,8,5,2,'#d8d0c0');R(0,10,2,1,'#c8c0b0');R(0,6,3,1,'#9a5a4a');
+ R(-5,-1,11,2,'#3a2a4a');R(-3,-4,7,3,'#4a2a5a');R(-3,-4,7,1,'#6a4a7a');R(3,-6,1,3,'#e04040');R(4,-7,1,2,'#ff8080');
+ R(5,10+wv,2,5,'#4a2a5a');R(6,14+wv,2,2,'#d8a07a');R(6,16+wv,1,4,'#5a3a20');R(5,19+wv,3,3,'#ffd070');R(5,19+wv,3,1,'#fff0b0');}
+function npcSmith(e){const t=(e.t||frame)%48,up=t<26,hit=t>=30&&t<34,a=up?Math.min(1,t/20):t<30?1-(t-26)/4:0;
+ // kowadło
+ R(7,14,12,3,'#5a5a66');R(7,14,12,1,'#8a8a98');R(5,14,3,2,'#5a5a66');R(10,17,6,3,'#3a3a44');R(8,20,10,2,'#2a2a30');R(12,13,4,1,hit?'#ffd060':'#ff7020');
+ // nogi, fartuch
+ R(-3,16,3,6,'#3a2c24');R(1,16,3,6,'#3a2c24');R(-4,22,4,2,'#1a120c');R(1,22,4,2,'#1a120c');
+ R(-5,7,10,10,'#6a4a2a');R(-5,7,2,10,'#4a2e18');R(-3,9,6,9,'#8a6038');R(-3,9,6,1,'#a87a48');R(-4,13,8,1,'#3a2414');R(0,13,1,1,'#c8a050');
+ R(-6,6,3,4,'#d8a07a');R(3,6,3,4,'#d8a07a');
+ // głowa: łysa, broda, opaska
+ R(-3,0,6,6,'#d8a07a');R(-3,0,6,1,'#e8b890');R(-3,1,1,4,'#b07850');R(1,2,1,1,'#1a1010');R(-3,1,6,1,'#a03030');R(-4,1,1,2,'#a03030');R(-3,4,6,3,'#6a3a1a');R(-2,7,4,1,'#5a2e14');R(0,4,2,1,'#b07850');
+ // ramię z młotem (wymach do góry i uderzenie w kowadło)
+ const ax=4+Math.round(a*-1),ay=8-Math.round(a*7);R(4,7,2,3,'#d8a07a');R(ax+1,ay,2,4,'#d8a07a');
+ const hx=hit||(!up&&t>=26)?12:ax+2,hy=hit||(!up&&t>=26)?9:ay-6;R(hx-1,hy+2,1,6,'#6a4a2a');R(hx-3,hy,5,3,'#5a5a66');R(hx-3,hy,5,1,'#9a9aa8');
+ R(-7,10,2,5,'#d8a07a');R(-7,14,2,2,'#b07850');}
+function drawNPC(fn,wx,wy,face,t,scale){const X=Math.round(wx-cx0),Y=Math.round(wy-cy0);ctx.save();if(scale&&scale!==1){ctx.translate(X,Y);ctx.scale(scale,scale);ctx.translate(-X,-Y);}spr(fn,{t,flash:0},wx,wy-24,face);ctx.restore();}
 
 // ===================== IKONKI PRZEDMIOTÓW =====================
 function drawIcon(id,x,y){x=Math.round(x);y=Math.round(y);const P2=(a,b,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x+a,y+b,w,h);},O=(a,b,w,h)=>{ctx.fillStyle='#0a0610';ctx.fillRect(x+a-1,y+b-1,w+2,h+2);};
@@ -1908,13 +1936,17 @@ const HC={skin:'#d8a07a',skinD:'#a8704e',hair:'#2e2018',hairD:'#1a120c',fur:'#7a
 let hooded=false;
 const LOOK={hair:['#2e2018','#6a3a1a','#c89040','#8a8a8a','#1a1a1e'],cape:['#8e1e24','#2a3a6a','#2a5a2a','#3a2a4a','#5a4a3a','#1e1a1c'],skin:['#d8a07a','#b07850','#7a5038'],armor:[['#5a3a24','#7a5434','#3a2416'],['#6a6e7a','#9ea4b0','#40444e'],['#2a2428','#4a4248','#16121a']]};
 function gearT(sl){return (P&&P.gear&&P.gear[sl])||0;}
+const OUTFIT=[['#5a3a24','#7a5434','#3a2416','#3a2c24'],['#3e2818','#5a3c24','#24160c','#2a2018'],['#2a2628','#423c40','#161214','#1e1a1c'],['#5a5a5e','#7a7a80','#3a3a3e','#3a3a40'],['#3a4a2a','#56683e','#242e1a','#2a3020'],['#2a3450','#3e4a6e','#1a2034','#22283a'],['#5a2424','#7a3434','#3a1414','#3a2020'],['#8a7450','#a89068','#5a4a30','#5a4a38']];
+const OUTFIT_N=['brązowy','ciemny brąz','czarny','szary','leśny','granatowy','bordowy','piaskowy'];
+const CAPE0=['#5a4a3a','#8e1e24','#2a3a6a','#2a5a2a','#4a2a5a','#6a4a2a','#1e1a1c','#a08a60'];
+const CAPE0_N=['szara','karmazynowa','granatowa','leśna','fioletowa','brązowa','czarna','piaskowa'];
 function applyLook(L){L=L||{};HC.hair=LOOK.hair[L.hair||0];HC.hairD=shade(HC.hair,-0.4);
  HC.skin=LOOK.skin[L.skin||0];HC.skinD=shade(HC.skin,-0.25);HC.beard=L.beard||0;
- const c=GEAR_LOOK.cape[gearT('cape')]||GEAR_LOOK.cape[0];HC.cape=c;HC.capeHi=shade(c,0.3);HC.capeD=shade(c,-0.35);HC.hood=gearT('head')===4?'#1a1012':shade(c,-0.3);HC.hoodD=gearT('head')===4?'#0a0608':shade(c,-0.55);
- const ch=GEAR_LOOK.chest[gearT('chest')]||GEAR_LOOK.chest[0];HC.lea=ch.c[0];HC.leaHi=ch.c[1];HC.leaD=ch.c[2];
+ const c=gearT('cape')===0?CAPE0[(L.cape||0)%8]:GEAR_LOOK.cape[gearT('cape')];HC.cape=c;HC.capeHi=shade(c,0.3);HC.capeD=shade(c,-0.35);HC.hood=gearT('head')===4?'#1a1012':shade(c,-0.3);HC.hoodD=gearT('head')===4?'#0a0608':shade(c,-0.55);
+ const OF=OUTFIT[(L.outfit||0)%8],ch=GEAR_LOOK.chest[gearT('chest')]||GEAR_LOOK.chest[0];if(gearT('chest')===0){HC.lea=OF[0];HC.leaHi=OF[1];HC.leaD=OF[2];}else{HC.lea=ch.c[0];HC.leaHi=ch.c[1];HC.leaD=ch.c[2];}
  const gl=GEAR_LOOK.gloves[gearT('gloves')]||GEAR_LOOK.gloves[0];HC.br=gl[0];HC.brHi=gl[1];
- HC.pants=GEAR_LOOK.pants[gearT('pants')]||GEAR_LOOK.pants[0];HC.boot=GEAR_LOOK.boots[gearT('boots')]||GEAR_LOOK.boots[0];
- hooded=gearT('head')===1||gearT('head')===4;}
+ HC.pants=gearT('pants')===0?OF[3]:GEAR_LOOK.pants[gearT('pants')];HC.boot=GEAR_LOOK.boots[gearT('boots')]||GEAR_LOOK.boots[0];
+ hooded=!!(PROF&&PROF.hood)||gearT('head')===1||gearT('head')===4;if(PROF&&PROF.hood&&gearT('head')!==1&&gearT('head')!==4){HC.hood=shade(c,-0.3);HC.hoodD=shade(c,-0.55);}}
 function shade(c,f){const n=parseInt(c.slice(1),16);let r=n>>16&255,g=n>>8&255,b=n&255;if(f<0){r*=1+f;g*=1+f;b*=1+f;}else{r+=(255-r)*f;g+=(255-g)*f;b+=(255-b)*f;}return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');}
 function heroBody(p){
  const run=p.onGround&&Math.abs(p.vx)>0.3&&!p.atk,air=!p.onGround,fl=(frame>>3)%2,idle=!run&&!air&&!p.atk,br=idle&&(frame%90)<45?1:0;
@@ -2716,7 +2748,9 @@ function drawMode(){titleBG();panel(40,14,320,196,0.85);txt('TRYB GRY',VW/2,22,'
  btn(60,44,280,46,'KLASYCZNY — ŻYCIA',()=>newGame(slot,pendDiff,'classic'),'3 życia, przepaść, kolce i lawa zabijają od razu.');txt('100 monet = dodatkowe życie. Koniec żyć = etap od nowa.',VW/2,74,'#a89878',7,'center');
  btn(60,100,280,46,'OGNISKA — BEZ ŻYĆ',()=>newGame(slot,pendDiff,'fire'),'Wracasz do ogniska, pułapki tylko ranią.');txt('Po śmierci zostawiasz połowę złota w sakwie do odzyskania.',VW/2,130,'#a89878',7,'center');
  btn(150,184,100,18,'WSTECZ',()=>go('diff'));}
-const CUSTOM=[
+const CUSTOM=[['Kaptur',()=>PROF.hood?'założony':'zdjęty',d=>{PROF.hood=!PROF.hood;}],
+ ['Kolor stroju',()=>OUTFIT_N[(PROF.look.outfit||0)%8],d=>{PROF.look.outfit=((PROF.look.outfit||0)+d+8)%8;}],
+ ['Peleryna',()=>CAPE0_N[(PROF.look.cape||0)%8],d=>{PROF.look.cape=((PROF.look.cape||0)+d+8)%8;}],
  ['Włosy',()=>['ciemne','kasztanowe','jasne','siwe','czarne'][PROF.look.hair],d=>{PROF.look.hair=(PROF.look.hair+d+5)%5;}],
  ['Broda',()=>['pełna','krótka','brak'][PROF.look.beard],d=>{PROF.look.beard=(PROF.look.beard+d+3)%3;}],
  ['Karnacja',()=>['jasna','śniada','ciemna'][PROF.look.skin],d=>{PROF.look.skin=(PROF.look.skin+d+3)%3;}],
@@ -2727,10 +2761,10 @@ function customInput(){const n=CUSTOM.length+1;if(pr('down')){uiSel=(uiSel+1)%n;
 function drawCustom(){titleBG();panel(24,10,352,205,0.9);txt('TWÓJ HALDOR',VW/2,15,'#ffe0b0',11,'center');
  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(40,36,120,150);ctx.save();ctx.translate(100,180);ctx.scale(5,5);DX=0;DY=-24;DF=1;cx0=0;cy0=0;applyLook(PROF.look);
  const f={onGround:true,vx:0,anim:0,atk:null,healT:0,dashT:0,wall:0,arm:'sword'};OL=true;heroBody(f);OL=false;heroBody(f);ctx.restore();
- uiBtns=[];CUSTOM.forEach(([n,v,fn],i)=>{const y=40+i*22,sel=uiSel===i;ctx.fillStyle=sel?'rgba(255,190,90,0.2)':'rgba(0,0,0,0.4)';ctx.fillRect(176,y,186,18);txt(n,184,y+4,sel?'#fff':'#c8b898',8);
+ uiBtns=[];CUSTOM.forEach(([n,v,fn],i)=>{const y=36+i*19,sel=uiSel===i;ctx.fillStyle=sel?'rgba(255,190,90,0.2)':'rgba(0,0,0,0.4)';ctx.fillRect(176,y,186,18);txt(n,184,y+4,sel?'#fff':'#c8b898',8);
   txt('◀',268,y+4,'#c8964a',8,'center');txt(v(),310,y+4,'#ffe8c0',8,'center');txt('▶',352,y+4,'#c8964a',8,'center');
   uiBtns.push({x:262,y,w:14,h:18,row:i,fn:()=>fn(-1)});uiBtns.push({x:276,y,w:86,h:18,row:i,fn:()=>fn(1)});});
- wrap('Zaczynasz w skórzanej kurcie, prostych butach i rękawicach, z wytartą Peleryną Złodzieja i bez nakrycia głowy. Lepsze wyposażenie zdobędziesz w trakcie gry: u kupców, w skrzyniach i od pokonanych przeciwników.',180,6).forEach((l,i)=>txt(l,180,112+i*9,'#c8b898',6));
+ wrap('Start w prostym stroju i Pelerynie Złodzieja. Lepsze rzeczy zdobędziesz w grze.',186,6).forEach((l,i)=>txt(l,180,157+i*8,'#c8b898',6));
  const sel=uiSel===CUSTOM.length;ctx.fillStyle=sel?'rgba(255,190,90,0.3)':'rgba(10,6,4,0.7)';ctx.fillRect(176,180,186,20);txt('ROZPOCZNIJ PRZYGODĘ',269,185,sel?'#fff':'#e8d0a0',9,'center');
  uiBtns.push({x:176,y:180,w:186,h:20,row:CUSTOM.length,fn:()=>{saveGame(false);go('story');}});
  txt(lastInput==='pad'?'↑/↓ wybór · ←/→ zmiana · A start':'↑/↓ wybór · ←/→ zmiana · Enter start · dotknij, by zmienić',VW/2,204,'#8a7a68',6,'center');}
@@ -2749,7 +2783,7 @@ function shopInput(){const items=shopItems();const n=items.length+1;
  for(const t of taps)for(const b of uiBtns)if(tapHit(t,b)){if(uiSel===b.i){b.fn();}else{uiSel=b.i;sfx('sel');}break;}taps=[];}
 function drawShop(){ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,VW,VH);const X=50,Y=14,W=300,H=196;panel(X,Y,W,H,0.94);
  txt('KUPIEC',X+10,Y+6,'#ffcf80',10);txt(`Złoto: ${P.gold} zł · Ruda: ${P.ore}`,X+W-14,Y+8,'#e8d8b8',7,'right');
- DX=X+30;DY=Y+24;DF=1;cx0=0;cy0=0;const C2=['#6a4a8a','#8a6a40'];R(-5,8,10,14,C2[0]);R(-4,0,8,8,'#d8a07a');R(-5,-2,10,3,C2[1]);R(-1,3,1,1,'#111');R(2,3,1,1,'#111');R(-3,6,6,3,'#c8c8c8');
+ {const c0=cx0,c1=cy0;cx0=0;cy0=0;ctx.save();ctx.translate(X+28,Y+46);ctx.scale(1.4,1.4);spr(npcMerchant,{t:frame,flash:0},0,-24,1);ctx.restore();cx0=c0;cy0=c1;}
  txt('„Witaj, wędrowcze. Mam coś dla ciebie.”',X+52,Y+28,'#d8c8a8',7);
  uiBtns=[];const items=shopItems(),VIS=6,st0=clamp(uiSel-VIS+1,0,Math.max(0,items.length-VIS));if(st0>0)txt('▲ więcej',X+W-14,Y+38,'#d8c098',6,'right');if(st0+VIS<items.length)txt('▼ więcej',X+W-60,Y+48+VIS*17+5,'#d8c098',6,'right');items.forEach((it,i)=>{if(i<st0||i>=st0+VIS)return;const ry=Y+48+(i-st0)*17,s=i===uiSel;ctx.fillStyle=s?'rgba(255,190,90,0.2)':'rgba(255,255,255,0.03)';ctx.fillRect(X+8,ry,W-16,15);
   const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';if(it.icon)drawIcon(it.icon,X+13,ry+3);txt(it.label,X+(it.icon?28:14),ry+3,col,8);txt(it.right,X+W-14,ry+3,it.state==='can'?'#ffd060':col,7,'right');uiBtns.push({x:X+8,y:ry,w:W-16,h:15,i,fn:()=>{if(it.state==='can'){it.act();sfx('buy');saveGame(true);}else sfx('deny');}});});
@@ -2841,7 +2875,7 @@ function drawCamp(){
   const sv={anim:P.anim,atk:P.atk,onGround:P.onGround,vx:P.vx,seat:P.seat,crouch:P.crouch,climb:P.climb,blocking:P.blocking,healT:P.healT,dashT:P.dashT,flash:P.flash,wall:P.wall};Object.assign(P,{atk:null,onGround:true,vx:0,seat:false,crouch:false,climb:false,blocking:false,healT:0,dashT:0,flash:0,wall:false});
   const c0=cx0,c1=cy0;cx0=0;cy0=0;ctx.save();ctx.translate(px+32,py+6);ctx.scale(2,2);applyLook(PROF.look);spr(heroBody,P,0,0,1);ctx.restore();cx0=c0;cy0=c1;Object.assign(P,sv);
   txt('ZAŁOŻONE:',px+32,py+60,'#ffcf80',6,'center');for(let k=0;k<3;k++){const ix=px+6+k*20,iy=py+70,id=P.equip[k];ctx.fillStyle='#2a1e14';ctx.fillRect(ix-1,iy-1,14,14);ctx.fillStyle='#5a3a1a';ctx.fillRect(ix-1,iy-1,14,1);if(id)drawIcon(id,ix+1,iy+1);else txt('·',ix+6,iy+2,'#5a4a3a',7,'center');}}
- const it=items[menu.sel];if(it){ctx.fillStyle='#120c08';ctx.fillRect(X+8,Y+H-48,W-16,26);wrap(it.desc,W-28,7).slice(0,2).forEach((l,i)=>txt(l,X+14,Y+H-46+i*10,'#d8c8a8',7));}
+ const KW=tabs[menu.tab].name==='KOWAL';const it=items[menu.sel];if(it){ctx.fillStyle='#120c08';ctx.fillRect(X+8,Y+H-48,W-16,26);if(KW){const c0=cx0,c1=cy0;cx0=0;cy0=0;spr(npcSmith,{t:frame,flash:0},X+W-48,Y+H-46,1);cx0=c0;cy0=c1;if(frame%48===30){sfx('clink');}}wrap(it.desc,KW?W-80:W-28,7).slice(0,2).forEach((l,i)=>txt(l,X+14,Y+H-46+i*10,'#d8c8a8',7));}
  if(menu.tab===0)txt('Za każdy awans (niebieski pasek pod zdrowiem) dostajesz 1 punkt umiejętności.',VW/2,Y+H-20,'#9fd88f',6,'center');txt(lastInput==='touch'?'Dotknij, by wybrać, i dotknij ponownie, by kupić.':lastInput==='pad'?'←/→ zakładki · A kup · B wyjdź':'←/→ zakładki · ↑/↓ wybór · Enter kup · Esc wyjdź',VW/2,Y+H-12,'#a89878',6,'center');}
 
 // ===================== AKTUALIZACJA =====================
