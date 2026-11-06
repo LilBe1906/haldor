@@ -1564,10 +1564,10 @@ function shopStock(g,x){const r=mulberry32(g*131+x);const pool=TRINKETS.slice();
 let shopCur=null;
 function openShop(sh){shopCur=sh;state='shop';uiSel=0;uiBtns=[];taps=[];sfx('chest');}
 function shopItems(){const sh=shopCur,gm=1+gi()*0.04,list=[];
- {const c=Math.round(45*gm),full=(P.antidote||0)>=5;list.push({label:`Odtrutka (masz ${P.antidote||0}/5)`,desc:'Leczy zatrucie od pająków, ghuli, ropuch i cierniaków. Gdy jesteś zatruty, przycisk LECZ najpierw pije odtrutkę. Zatrucie osłabia też bukłak leczenia o połowę.',right:full?'✔ PEŁNO':'cena: '+c+' zł',state:full?'own':P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.antidote=(P.antidote||0)+1;}});}
- for(const id of sh.stock){const t=TRINKETS.find(x=>x.id===id),c=Math.round(t.cost*gm),own=P.trinkets.includes(id);list.push({label:t.n,desc:t.d+(own?' Masz już ten przedmiot.':' Po zakupie załóż go w zakładce AKCESORIA przy ognisku (do 3 naraz).'),right:own?'✔ MASZ':'cena: '+c+' zł',state:own?'own':P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.trinkets.push(id);if(P.equip.length<3)P.equip.push(id);P.maxHp=calcMaxHp();}});}
- const oc=Math.round(70*gm);list.push({label:'Bryłka rudy',desc:'Ruda dla kowala.',right:'cena: '+oc+' zł',state:P.gold>=oc?'can':'no',act:()=>{P.gold-=oc;P.ore++;}});
- const fc=Math.round(40*gm);list.push({label:'Napełnij bukłaki',desc:'Uzupełnia wszystkie porcje leczenia.',right:P.flasks<P.maxFlasks?'cena: '+fc+' zł':'pełne',state:P.flasks<P.maxFlasks&&P.gold>=fc?'can':'no',act:()=>{P.gold-=fc;P.flasks=P.maxFlasks;}});
+ {const c=Math.round(45*gm),full=(P.antidote||0)>=5;list.push({icon:'anti',label:`Odtrutka (masz ${P.antidote||0}/5)`,desc:'Leczy zatrucie od pająków, ghuli, ropuch i cierniaków. Gdy jesteś zatruty, przycisk LECZ najpierw pije odtrutkę. Zatrucie osłabia też bukłak leczenia o połowę.',right:full?'✔ PEŁNO':'cena: '+c+' zł',state:full?'own':P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.antidote=(P.antidote||0)+1;}});}
+ for(const id of sh.stock){const t=TRINKETS.find(x=>x.id===id),c=Math.round(t.cost*gm),own=P.trinkets.includes(id);list.push({icon:id,label:t.n,desc:t.d+(own?' Masz już ten przedmiot.':' Po zakupie załóż go w zakładce AKCESORIA przy ognisku (do 3 naraz).'),right:own?'✔ MASZ':'cena: '+c+' zł',state:own?'own':P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.trinkets.push(id);if(P.equip.length<3)P.equip.push(id);P.maxHp=calcMaxHp();}});}
+ const oc=Math.round(70*gm);list.push({icon:'ore',label:'Bryłka rudy',desc:'Ruda dla kowala.',right:'cena: '+oc+' zł',state:P.gold>=oc?'can':'no',act:()=>{P.gold-=oc;P.ore++;}});
+ const fc=Math.round(40*gm);list.push({icon:'flask',label:'Napełnij bukłaki',desc:'Uzupełnia wszystkie porcje leczenia.',right:P.flasks<P.maxFlasks?'cena: '+fc+' zł':'pełne',state:P.flasks<P.maxFlasks&&P.gold>=fc?'can':'no',act:()=>{P.gold-=fc;P.flasks=P.maxFlasks;}});
  return list;}
 function persistP(){return {antidote:P.antidote,hp:P.hp,xp:P.xp,lvl:P.lvl,gold:P.gold,sp:P.sp,maxFlasks:P.maxFlasks,skills:P.skills,hpUp:P.hpUp,strUp:P.strUp,trinkets:P.trinkets,equip:P.equip,arm:P.arm,mast:P.mast,forge:P.forge,lives:P.lives,coinCount:P.coinCount,ore:P.ore,armor:P.armor,helm:P.helm};}
 function saveGame(inStage){if(slot<0||!PROF)return;
@@ -1616,9 +1616,9 @@ function campTabs(){
  if(P.helm===0)fg.push({label:'Hełm: brak',desc:'Pierwszy hełm zdobędziesz, pokonując władcę Zapomnianych Ruin. Potem kowal może go ulepszać.',right:'do zdobycia',state:'no',act:()=>{}});
  else if(P.helm<HELM_N.length-1){const n=P.helm+1,c=HELM_COST[n],o=HELM_ORE[n];fg.push({label:`Hełm: ${HELM_N[P.helm]} → ${HELM_N[n]}`,desc:`Każdy poziom hełmu: −5% obrażeń i +2% szans na krytyk. Potrzeba: ${c} zł i ${o} rudy (masz ${P.ore}).`,right:`${c} zł + ${o} rudy`,state:P.gold>=c&&P.ore>=o?'can':'no',act:()=>{P.gold-=c;P.ore-=o;P.helm++;}});}
  else fg.push({label:'Hełm: '+HELM_N[P.helm]+' (najlepszy)',desc:'Lepszego hełmu nie ma.',right:'✔ MAKSYMALNY',state:'own',act:()=>{}});
- if(P.maxFlasks<6){const c=60*P.maxFlasks;fg.push({label:`Większy bukłak (masz ${P.maxFlasks}/6 porcji)`,desc:'Dodatkowa porcja leczenia (klawisz H / LT / LECZ). Bukłaki odnawiają się przy ognisku.',right:'cena: '+c+' zł',state:P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.maxFlasks++;P.flasks=P.maxFlasks;}});}
+ if(P.maxFlasks<6){const c=60*P.maxFlasks;fg.push({icon:'flask',label:`Większy bukłak (masz ${P.maxFlasks}/6 porcji)`,desc:'Dodatkowa porcja leczenia (klawisz H / LT / LECZ). Bukłaki odnawiają się przy ognisku.',right:'cena: '+c+' zł',state:P.gold>=c?'can':'no',act:()=>{P.gold-=c;P.maxFlasks++;P.flasks=P.maxFlasks;}});}
  fg.push({label:'Kaptur: '+(PROF.hood?'założony':'zdjęty'),desc:'Załóż albo zdejmij kaptur Haldora.',right:PROF.hood?'zdejmij':'załóż',state:'can',act:()=>{PROF.hood=!PROF.hood;}});
- const tk=[{label:`Załóż do 3 akcesoriów (masz ${P.trinkets.length})`,desc:'Akcesoria kupisz u kupców w domkach. Kliknij, by założyć lub zdjąć.',right:`${P.equip.length}/3 założone`,state:'own',act:()=>{}}].concat(P.trinkets.map(id=>{const t=TRINKETS.find(x=>x.id===id),on=P.equip.includes(id);return {label:t.n,desc:t.d,right:on?'✔ ZAŁOŻONE':'załóż',state:on||P.equip.length<3?'can':'no',act:()=>{if(on)P.equip=P.equip.filter(x=>x!==id);else P.equip.push(id);P.maxHp=calcMaxHp();P.maxFlasks=Math.max(P.maxFlasks,0);}};}));
+ const tk=[{label:`Załóż do 3 akcesoriów (masz ${P.trinkets.length})`,desc:'Akcesoria kupisz u kupców w domkach. Kliknij, by założyć lub zdjąć.',right:`${P.equip.length}/3 założone`,state:'own',act:()=>{}}].concat(P.trinkets.map(id=>{const t=TRINKETS.find(x=>x.id===id),on=P.equip.includes(id);return {icon:id,label:t.n,desc:t.d,right:on?'✔ ZAŁOŻONE':'załóż',state:on||P.equip.length<3?'can':'no',act:()=>{if(on)P.equip=P.equip.filter(x=>x!==id);else P.equip.push(id);P.maxHp=calcMaxHp();P.maxFlasks=Math.max(P.maxFlasks,0);}};}));
  const st=[{label:`Poziom ${P.lvl}  ·  XP ${Math.floor(P.xp)}/${xpNeed(P.lvl)}`,desc:'Doświadczenie zdobywasz za każdego wroga i każdą skrzynię.',right:'',state:'own',act:()=>{}},
   {label:`Zdrowie ${Math.ceil(P.hp)}/${P.maxHp}`,desc:'Rośnie z poziomem i umiejętnością Wytrwałość.',right:'',state:'own',act:()=>{}},
   {label:`Broń w ręku: ${(ARMS.find(a=>a.id===P.arm)||ARMS[0]).n}`,desc:`Obrażenia: ${Math.round(baseDmg())} · Pieczęcie: ${PROF.seals}/5`,right:'',state:'own',act:()=>{}},
@@ -1816,6 +1816,31 @@ function drawProps(){for(const p of props){if(p.state==='gone')continue;const X=
  ctx.fillStyle='#0a0610';ctx.fillRect(X-1,Y-1,8,6);ctx.fillRect(X,Y+4,6,5);ctx.fillRect(X+1,Y+8,4,5);
  ctx.fillStyle='#9ad0f0';ctx.fillRect(X,Y,6,4);ctx.fillRect(X+1,Y+4,4,4);ctx.fillRect(X+2,Y+8,2,4);ctx.fillStyle='#d8f0ff';ctx.fillRect(X,Y,6,1);ctx.fillStyle='#6aa0c8';ctx.fillRect(X+4,Y+1,1,6);ctx.fillStyle='#fff';ctx.fillRect(X+1,Y,1,7);if(frame%60<4)ctx.fillRect(X+2,Y+10,1,1);}}
 
+
+// ===================== IKONKI PRZEDMIOTÓW =====================
+function drawIcon(id,x,y){x=Math.round(x);y=Math.round(y);const P2=(a,b,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x+a,y+b,w,h);},O=(a,b,w,h)=>{ctx.fillStyle='#0a0610';ctx.fillRect(x+a-1,y+b-1,w+2,h+2);};
+ const bottle=(c,cL,cD)=>{O(2,0,6,10);P2(4,0,2,2,'#6a4a2a');P2(3,2,4,1,'#d8d0c0');P2(2,3,6,7,c);P2(2,3,6,1,cL);P2(3,4,1,4,'#fff');P2(6,6,1,3,cD);P2(2,9,6,1,cD);};
+ const ring=(g)=>{O(1,2,8,8);P2(2,4,6,5,'#c8a050');P2(3,5,4,3,'#1a120c');P2(2,4,6,1,'#ffe090');P2(3,1,4,3,g);P2(4,1,1,1,'#fff');};
+ switch(id){
+  case 'flask':bottle('#d83030','#ff7070','#8a1818');break;
+  case 'anti':bottle('#8ab830','#c8f060','#5a8a20');break;
+  case 'ore':O(0,2,10,7);P2(0,3,10,6,'#4a5260');P2(1,2,7,4,'#8a9ab0');P2(2,3,2,1,'#d0e8ff');P2(6,5,2,1,'#d0e8ff');P2(8,4,1,4,'#2e343e');break;
+  case 'earjump':O(2,0,6,10);P2(4,0,2,2,'#ffd040');P2(3,2,4,1,'#ffd040');P2(2,3,1,4,'#ffd040');P2(7,3,1,4,'#ffd040');P2(3,7,4,1,'#ffd040');P2(4,7,2,3,'#e8e8f0');P2(5,8,1,2,'#8ad0ff');P2(3,3,1,1,'#fff6b0');break;
+  case 'ringstr':ring('#e03040');break;
+  case 'ringmana':ring('#4080ff');break;
+  case 'amulife':O(1,0,8,10);P2(1,0,1,4,'#c8a050');P2(8,0,1,4,'#c8a050');P2(2,4,1,1,'#c8a050');P2(7,4,1,1,'#c8a050');P2(3,4,4,1,'#c8a050');P2(2,5,2,2,'#e03040');P2(6,5,2,2,'#e03040');P2(3,6,4,2,'#e03040');P2(4,8,2,1,'#a01828');P2(3,5,1,1,'#ffa0a8');break;
+  case 'charmgold':O(1,0,8,10);P2(1,0,1,3,'#c8a050');P2(8,0,1,3,'#c8a050');P2(2,3,6,1,'#c8a050');P2(2,4,6,6,'#ffd040');P2(3,5,4,4,'#c89020');P2(4,6,2,2,'#fff6b0');P2(2,4,6,1,'#fff6b0');break;
+  case 'bootwind':O(1,1,8,9);P2(3,1,3,6,'#6a4a2a');P2(3,1,3,1,'#8a6a40');P2(2,7,7,3,'#4a3420');P2(2,9,7,1,'#2a1a10');P2(7,7,1,1,'#8a6a40');P2(0,2,3,1,'#fff');P2(0,3,3,1,'#d8e8f8');P2(1,4,2,1,'#fff');break;
+  case 'talore':O(1,0,8,10);P2(4,0,2,2,'#8a6a40');P2(2,2,6,7,'#3a4a6a');P2(2,2,6,1,'#5a6a8a');P2(4,4,2,3,'#7ac8ff');P2(3,5,4,1,'#7ac8ff');P2(2,8,6,1,'#22304a');break;
+  case 'eyecrit':O(0,2,10,6);P2(0,4,10,2,'#e8e0d0');P2(1,3,8,4,'#e8e0d0');P2(3,3,4,4,'#d0a020');P2(4,4,2,2,'#111');P2(4,4,1,1,'#fff');P2(0,2,10,1,'#6a4a2a');break;
+  case 'beltflask':O(0,2,10,7);P2(0,3,10,2,'#4a2e18');P2(0,3,10,1,'#6a4a30');P2(4,3,2,2,'#c8a050');P2(1,5,2,4,'#d83030');P2(7,5,2,4,'#d83030');P2(1,5,2,1,'#ff9090');P2(7,5,2,1,'#ff9090');break;
+  case 'glovesm':O(1,0,8,10);P2(2,3,6,7,'#7a5434');P2(2,3,6,1,'#9a7448');P2(2,0,1,4,'#7a5434');P2(4,0,1,3,'#7a5434');P2(6,0,1,3,'#7a5434');P2(8,4,1,3,'#7a5434');P2(2,8,6,2,'#4a2e18');P2(3,6,4,1,'#8a90a0');break;
+  case 'fangwolf':O(1,0,8,10);P2(1,0,1,3,'#8a6a40');P2(8,0,1,3,'#8a6a40');P2(2,3,6,1,'#8a6a40');P2(3,4,4,2,'#efe8d0');P2(4,6,2,2,'#efe8d0');P2(4,8,1,2,'#d8d0b8');P2(3,4,1,1,'#fff');break;
+  case 'cloakshad':O(1,0,8,10);P2(3,0,4,2,'#3a2a4a');P2(2,2,6,8,'#2a1e38');P2(2,2,1,8,'#1a1226');P2(6,3,1,6,'#4a3a5e');P2(3,9,1,1,'#1a1226');P2(5,9,1,1,'#1a1226');P2(4,4,2,1,'#a080ff');break;
+  case 'runefire':O(1,1,8,9);P2(1,1,8,9,'#4a3a34');P2(1,1,8,1,'#6a5a4a');P2(4,2,2,6,'#ff6020');P2(2,4,6,1,'#ff9030');P2(3,6,1,1,'#ffd060');P2(6,3,1,1,'#ffd060');lights.push({x:x+cx0+5,y:y+cy0+5,r:10,c:'#f84'});break;
+  case 'runefrost':O(1,1,8,9);P2(1,1,8,9,'#3a4a5a');P2(1,1,8,1,'#5a6a7a');P2(4,2,2,6,'#9fe0ff');P2(2,4,6,1,'#c8f0ff');P2(3,3,1,1,'#fff');P2(6,7,1,1,'#fff');break;
+  default:O(1,1,8,8);P2(1,1,8,8,'#5a4a3a');P2(4,3,2,4,'#ffd060');}}
+
 // ===================== POSTAĆ GRACZA (oryginalny projekt) =====================
 // Haldor wg grafiki koncepcyjnej: ciemne włosy, broda, futrzany kołnierz, czerwony płaszcz, skórzana zbroja, stalowe karwasze
 const HC={skin:'#d8a07a',skinD:'#a8704e',hair:'#2e2018',hairD:'#1a120c',fur:'#7a7068',furHi:'#a8a098',furD:'#4a443e',lea:'#5a3a24',leaHi:'#7a5434',leaD:'#3a2416',steel:'#8a90a0',steelHi:'#cfd4de',steelD:'#4a4e5a',cape:'#8e1e24',capeHi:'#b8343a',capeD:'#561016',belt:'#2a1a10',buck:'#c8a050',pants:'#3a2c24',boot:'#221812',hood:'#3a1418',hoodD:'#22090c',mark:'#ff9a40'};
@@ -1829,14 +1854,17 @@ function heroBody(p){
  const f6=Math.floor(p.anim*1.5)%6,RUN=[[2,0,-2,1,0],[3,-1,-3,0,-1],[1,0,-1,-1,0],[-2,1,2,0,0],[-3,0,3,-1,-1],[-1,-1,1,0,0]];
  const rf=run?RUN[f6]:null,bob=rf?rf[4]:0;DY+=br+bob;
  const pantsD=shade(HC.pants,-0.3),pantsH=shade(HC.pants,0.18),bootH=shade(HC.boot,0.3),capeT=shade(HC.cape,-0.15);
+ const SHD=(P&&P.equip&&p===P&&P.equip.includes('cloakshad'));const cS=SHD?'#2a1e38':HC.cape,cSH=SHD?'#4a3a5e':HC.capeHi,cSD=SHD?'#1a1226':HC.capeD;
  // peleryna: segmenty falujące za plecami
  const spd=Math.min(1,Math.abs(p.vx)/2.2),lift=air?(p.vy<0?2:-1):0;
  for(let k=0;k<14;k++){const t=k/13,sw=Math.round(t*(spd*4+lift)+Math.sin(frame*0.12+k*0.45)*(0.6+spd*1.2)*t),y=7+k,xL=-6-sw;
-  if(k>11&&((k+(fl?1:0))%2===0))continue;R(xL,y,1,1,HC.capeD);R(xL+1,y,2,1,k%5===2?HC.capeHi:HC.cape);R(xL+3,y,1,1,capeT);}
+  if(k>11&&((k+(fl?1:0))%2===0))continue;R(xL,y,1,1,cSD);R(xL+1,y,2,1,k%5===2?cSH:cS);R(xL+3,y,1,1,SHD?'#221830':capeT);}
+ const EQ0=(P&&P.equip&&p===P)?P.equip:[];
  // tylna ręka (za tułowiem), pracuje w biegu
- if(!p.atk&&!p.seat&&!p.crouch){const sw2=rf?[-2,-1,0,2,1,0][f6]:air?-2:0;R(-5+sw2,10,2,4,HC.leaD);R(-5+sw2,14,2,2,HC.skinD);}
+ if(!p.atk&&!p.seat&&!p.crouch){const sw2=rf?[-2,-1,0,2,1,0][f6]:air?-2:0;R(-5+sw2,10,2,4,HC.leaD);R(-5+sw2,14,2,2,EQ0.includes('glovesm')?'#6a4a2a':HC.skinD);if(EQ0.includes('ringstr')||EQ0.includes('ringmana'))R(-5+sw2,14,1,1,frame%40<20?(EQ0.includes('ringstr')?'#ff5060':'#60a0ff'):'#ffd040');}
  // nogi
- const leg=(ox,ly,front)=>{const pc=front?HC.pants:pantsD;R(ox-1,17,3,2,pc);if(front)R(ox,17,1,2,pantsH);const kx=ox-1+(ly<0?1:0);R(kx,19,3,2+(ly>0?0:0),pc);R(kx,20,3,1,front?HC.steelD:shade(HC.steelD,-0.3));R(kx,21+ly,4,3-(ly<0?1:0),HC.boot);R(kx+1,21+ly,2,1,front?bootH:HC.boot);R(kx,23+(ly<0?-1:ly>0?0:0),4,1,'#120c08');};
+ const WB=(P&&P.equip&&p===P&&P.equip.includes('bootwind'));
+ const leg=(ox,ly,front)=>{const pc=front?HC.pants:pantsD;R(ox-1,17,3,2,pc);if(front)R(ox,17,1,2,pantsH);const kx=ox-1+(ly<0?1:0);R(kx,19,3,2+(ly>0?0:0),pc);R(kx,20,3,1,front?HC.steelD:shade(HC.steelD,-0.3));R(kx,21+ly,4,3-(ly<0?1:0),HC.boot);R(kx+1,21+ly,2,1,front?bootH:HC.boot);R(kx,23+(ly<0?-1:ly>0?0:0),4,1,'#120c08');if(WB&&front){R(kx-1,21+ly,1,1,'#fff');R(kx-2,22+ly,2,1,'#d8e8f8');}};
  if(p.seat){R(-3,16,8,3,HC.pants);R(-2,16,6,1,pantsH);R(3,17,3,4,HC.pants);R(3,20,4,3,HC.boot);R(4,20,2,1,bootH);R(-1,16,3,2,HC.steelD);}
  else if(p.crouch){R(-4,13,7,3,HC.pants);R(-3,13,5,1,pantsH);R(2,14,3,3,HC.pants);R(-5,16,4,3,HC.boot);R(2,16,4,3,HC.boot);R(3,16,2,1,bootH);}
  else if(rf){leg(rf[2],rf[3],false);leg(rf[0],rf[1],true);}
@@ -1851,8 +1879,14 @@ function heroBody(p){
  if(AL>=3){R(-6,8,4,3,HC.steel);R(-6,8,4,1,HC.steelHi);R(-6,10,4,1,HC.steelD);R(3,8,3,3,HC.steel);R(3,8,3,1,HC.steelHi);R(-3,10,6,4,HC.steelD);R(-3,10,6,1,HC.steel);R(2,10,1,4,HC.steel);}
  if(AL>=5){R(-3,10,6,1,'#e8c060');R(-6,8,4,1,'#e8c060');R(3,8,3,1,'#e8c060');R(0,11,1,3,'#e8c060');}
  R(-4,15,8,2,HC.belt);R(-4,15,8,1,shade(HC.belt,0.25));R(0,15,2,2,HC.buck);R(1,15,1,1,'#fff0b0');R(-5,15,2,3,'#4a3420');R(-5,15,2,1,'#6a4c30');R(3,16,1,2,HC.steelD);
+ const EQ=(P&&P.equip&&p===P)?P.equip:[];
+ if(EQ.includes('beltflask')){R(2,15,1,2,'#d83030');R(3,15,1,1,'#ff9090');R(-3,15,1,2,'#d83030');}
+ if(EQ.includes('talore')){R(-5,16,2,2,'#3a4a6a');R(-5,16,1,1,'#7ac8ff');}
  // futrzany kołnierz z kępkami
  R(-6,7,11,3,HC.fur);R(-5,7,9,1,HC.furHi);R(-3,7,1,1,'#d8d0c8');R(-6,9,2,1,HC.furD);R(3,9,2,1,HC.furD);R(-2,8,1,1,HC.furD);R(1,8,1,1,HC.furD);R(-6,10,1,1,HC.furD);R(-3,10,1,1,HC.fur);R(2,10,1,1,HC.fur);R(4,9,1,1,HC.furHi);
+ if(EQ.includes('amulife')){R(0,10,1,1,'#c8a050');R(-1,11,2,2,'#e03040');R(-1,11,1,1,'#ffa0a8');}
+ else if(EQ.includes('charmgold')){R(0,10,1,1,'#c8a050');R(-1,11,2,2,'#ffd040');R(-1,11,1,1,'#fff6b0');}
+ if(EQ.includes('fangwolf')){R(-3,10,1,2,'#efe8d0');R(2,10,1,1,'#8a6a40');}
  // głowa
  const hb=(run?1:0)+(air?1:0),skH=shade(HC.skin,0.18);
  if(hooded||p.hood){R(-4,0,8,8,HC.hood);R(-4,0,8,1,shade(HC.hood,0.2));R(-5,2,1,6,HC.hoodD);R(-6-hb,4,1,5,HC.hoodD);R(-2,3,5,5,HC.skinD);R(-1,3,4,1,shade(HC.skinD,-0.3));R(1,4,1,1,'#ffd890');R(2,4,1,1,'#ffd890');R(-2,6,5,2,HC.hair);R(3,1,1,6,HC.hoodD);}
@@ -1860,12 +1894,14 @@ function heroBody(p){
   R(0,3,3,1,HC.hairD);R(1,4,1,1,frame%180<6?HC.skin:'#1a1010');R(2,4,1,1,frame%180<6?HC.skin:'#e8e0d0');R(-1,6,3,1,shade(HC.skin,-0.15));
   if(HC.beard===0){R(-3,6,6,3,HC.hair);R(-2,6,4,1,shade(HC.hair,0.2));R(-2,9,4,1,HC.hairD);R(0,7,2,1,shade(HC.skin,-0.3));}else if(HC.beard===1){R(-3,7,6,1,HC.hair);R(-1,8,3,1,HC.hair);R(0,7,1,1,shade(HC.hair,0.25));}R(2,6,1,1,HC.skinD);
   R(-4,-1,8,4,HC.hair);R(-5,0,2,7,HC.hair);R(-4,-1,6,1,shade(HC.hair,0.3));R(-3,0,1,2,shade(HC.hair,0.45));R(0,0,1,1,shade(HC.hair,0.35));R(3,0,2,2,HC.hair);R(-6-hb,2,1,5,HC.hairD);R(-7-hb,4,1,3,HC.hairD);R(-5,6,1,2,HC.hairD);R(-2,2,1,1,HC.skinD);
+  if(EQ.includes('earjump')&&!(P&&P.helm>=1)){R(-3,6,1,1,'#ffd040');R(-3,7,1,1,frame%60<30?'#fff6b0':'#ffd040');}if(EQ.includes('eyecrit')){R(-6-hb,-2,1,3,'#c8a050');R(-7-hb,-3,1,2,'#fff');R(-5-hb,-3,1,1,'#8a6a40');}
   const HL=(P&&P.helm)||0;
   if(HL>=1){R(-4,-2,8,4,HC.steel);R(-4,-2,8,1,HC.steelHi);R(-4,1,8,1,HC.steelD);R(2,-1,1,1,'#fff');}
   if(HL>=2){R(2,1,1,4,HC.steelD);}
   if(HL>=3){R(-6,-3,2,3,'#efe4c8');R(-7,-5,1,2,'#efe4c8');R(4,-3,2,3,'#efe4c8');R(6,-5,1,2,'#efe4c8');R(-6,-1,2,1,'#b8ac90');R(4,-1,2,1,'#b8ac90');}
   if(HL>=4){R(-1,-6,2,4,'#a02020');R(0,-7,2,2,'#c83030');R(-2-hb,-5,1,3,'#801818');R(-4,-2,8,1,'#e8c060');}
   if(HL>=5){R(-4,-4,1,2,'#e8c060');R(-1,-5,2,3,'#e8c060');R(3,-4,1,2,'#e8c060');R(0,-4,1,1,'#ff4040');}}
+ if(p===P&&P.equip&&frame%5===0&&(P.equip.includes('runefire')||P.equip.includes('runefrost'))){const fire=P.equip.includes('runefire');parts.push({x:DX+DF*8+rand(-2,2),y:DY+rand(4,14),vx:0,vy:fire?-0.5:0.3,life:16,max:16,c:fire?(Math.random()<0.5?'#ff9030':'#ffd060'):(Math.random()<0.5?'#9fe0ff':'#fff'),s:1,g:0});}
  heroArm(p);}
 function heroArm(p){
  const a=p.atk,A=p.arm||'sword',AC=(ARMS.find(x=>x.id===A)||ARMS[0]).c;let pose='rest';
@@ -2646,10 +2682,10 @@ function drawShop(){ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,VW,VH);cons
  txt('KUPIEC',X+10,Y+6,'#ffcf80',10);txt(`Złoto: ${P.gold} zł · Ruda: ${P.ore}`,X+W-14,Y+8,'#e8d8b8',7,'right');
  DX=X+30;DY=Y+24;DF=1;cx0=0;cy0=0;const C2=['#6a4a8a','#8a6a40'];R(-5,8,10,14,C2[0]);R(-4,0,8,8,'#d8a07a');R(-5,-2,10,3,C2[1]);R(-1,3,1,1,'#111');R(2,3,1,1,'#111');R(-3,6,6,3,'#c8c8c8');
  txt('„Witaj, wędrowcze. Mam coś dla ciebie.”',X+52,Y+28,'#d8c8a8',7);
- uiBtns=[];const items=shopItems();items.forEach((it,i)=>{const ry=Y+50+i*20,s=i===uiSel;ctx.fillStyle=s?'rgba(255,190,90,0.2)':'rgba(255,255,255,0.03)';ctx.fillRect(X+8,ry,W-16,18);
-  const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';txt(it.label,X+14,ry+4,col,8);txt(it.right,X+W-14,ry+4,it.state==='can'?'#ffd060':col,7,'right');uiBtns.push({x:X+8,y:ry,w:W-16,h:18,i,fn:()=>{if(it.state==='can'){it.act();sfx('buy');saveGame(true);}else sfx('deny');}});});
- const ey=Y+50+items.length*20+4,es=uiSel===items.length;ctx.fillStyle=es?'rgba(255,190,90,0.25)':'rgba(10,6,4,0.7)';ctx.fillRect(X+W/2-50,ey,100,16);txt('WYJDŹ',X+W/2,ey+3,es?'#fff':'#d8c8a8',8,'center');uiBtns.push({x:X+W/2-50,y:ey,w:100,h:16,i:items.length,fn:()=>{state='play';}});
- const it=items[uiSel];if(it){wrap(it.desc,W-28,7).slice(0,2).forEach((l,i)=>txt(l,X+14,Y+H-28+i*10,'#c8b898',7));}}
+ uiBtns=[];const items=shopItems();items.forEach((it,i)=>{const ry=Y+48+i*17,s=i===uiSel;ctx.fillStyle=s?'rgba(255,190,90,0.2)':'rgba(255,255,255,0.03)';ctx.fillRect(X+8,ry,W-16,15);
+  const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';if(it.icon)drawIcon(it.icon,X+13,ry+3);txt(it.label,X+(it.icon?28:14),ry+3,col,8);txt(it.right,X+W-14,ry+3,it.state==='can'?'#ffd060':col,7,'right');uiBtns.push({x:X+8,y:ry,w:W-16,h:15,i,fn:()=>{if(it.state==='can'){it.act();sfx('buy');saveGame(true);}else sfx('deny');}});});
+ const ey=Y+48+items.length*17+2,es=uiSel===items.length;ctx.fillStyle=es?'rgba(255,190,90,0.25)':'rgba(10,6,4,0.7)';ctx.fillRect(X+W/2-50,ey,100,16);txt('WYJDŹ',X+W/2,ey+3,es?'#fff':'#d8c8a8',8,'center');uiBtns.push({x:X+W/2-50,y:ey,w:100,h:16,i:items.length,fn:()=>{state='play';}});
+ const it=items[uiSel];if(it){wrap(it.desc,W-28,7).slice(0,2).forEach((l,i)=>txt(l,X+14,Y+H-22+i*9,'#c8b898',7));}}
 function drawInterlude(){const g=pendStage,w=g===FINAL?4:Math.floor(g/STAGES_PER);if(!drawContain(IMG[WORLDS[w].img])){ctx.fillStyle='#000';ctx.fillRect(0,0,VW,VH);}
  ctx.fillStyle='rgba(6,3,6,0.55)';ctx.fillRect(0,0,VW,VH);panel(50,40,300,140,0.88);txt(stageName(g),VW/2,48,'#ffe0b0',10,'center');
  let y=70;for(const l of wrap(INTRO[introKey],270,8)){txt(l,VW/2,y,'#f4e4c4',8,'center');y+=11;}
@@ -2730,8 +2766,12 @@ function drawCamp(){
  const items=tabs[menu.tab].items,vis=7;
  for(let j=0;j<Math.min(vis,items.length);j++){const i=j+menu.scroll;if(i>=items.length)break;const it=items[i],ry=Y+42+j*16,s=i===menu.sel;
   ctx.fillStyle=s?'rgba(255,190,90,0.2)':'rgba(255,255,255,0.03)';ctx.fillRect(X+8,ry,W-16,14);if(s){ctx.fillStyle='#ffcf70';ctx.fillRect(X+8,ry,2,14);}
-  const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';txt(it.label,X+14,ry+3,col,7);txt(it.right,X+W-14,ry+3,it.state==='can'?'#ffd060':col,7,'right');campRects.push({k:'item',i,x:X+8,y:ry,w:W-16,h:14});}
+  const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';if(it.icon)drawIcon(it.icon,X+13,ry+2);txt(it.label,X+(it.icon?27:14),ry+3,col,7);txt(it.right,X+W-14,ry+3,it.state==='can'?'#ffd060':col,7,'right');campRects.push({k:'item',i,x:X+8,y:ry,w:W-16,h:14});}
  if(items.length>vis){txt(menu.scroll>0?'▲':'',X+W-14,Y+34,'#a08a6a',7,'right');txt(menu.scroll+vis<items.length?'▼':'',X+W-14,Y+42+vis*16-2,'#a08a6a',7,'right');}
+ if(tabs[menu.tab].name==='POSTAĆ'){const px=X+W-74,py=Y+44;ctx.fillStyle='#120c08';ctx.fillRect(px,py,64,94);ctx.fillStyle='#3a2a1a';ctx.fillRect(px,py,64,1);ctx.fillRect(px,py+93,64,1);
+  const sv={anim:P.anim,atk:P.atk,onGround:P.onGround,vx:P.vx,seat:P.seat,crouch:P.crouch,climb:P.climb,blocking:P.blocking,healT:P.healT,dashT:P.dashT,flash:P.flash,wall:P.wall};Object.assign(P,{atk:null,onGround:true,vx:0,seat:false,crouch:false,climb:false,blocking:false,healT:0,dashT:0,flash:0,wall:false});
+  const c0=cx0,c1=cy0;cx0=0;cy0=0;ctx.save();ctx.translate(px+32,py+6);ctx.scale(2,2);applyLook(PROF.look);hooded=!!PROF.hood;spr(heroBody,P,0,0,1);ctx.restore();cx0=c0;cy0=c1;Object.assign(P,sv);
+  txt('ZAŁOŻONE:',px+32,py+60,'#ffcf80',6,'center');for(let k=0;k<3;k++){const ix=px+6+k*20,iy=py+70,id=P.equip[k];ctx.fillStyle='#2a1e14';ctx.fillRect(ix-1,iy-1,14,14);ctx.fillStyle='#5a3a1a';ctx.fillRect(ix-1,iy-1,14,1);if(id)drawIcon(id,ix+1,iy+1);else txt('·',ix+6,iy+2,'#5a4a3a',7,'center');}}
  const it=items[menu.sel];if(it){ctx.fillStyle='#120c08';ctx.fillRect(X+8,Y+H-48,W-16,26);wrap(it.desc,W-28,7).slice(0,2).forEach((l,i)=>txt(l,X+14,Y+H-46+i*10,'#d8c8a8',7));}
  if(menu.tab===0)txt('Za każdy awans (niebieski pasek pod zdrowiem) dostajesz 1 punkt umiejętności.',VW/2,Y+H-20,'#9fd88f',6,'center');txt(lastInput==='touch'?'Dotknij, by wybrać, i dotknij ponownie, by kupić.':lastInput==='pad'?'←/→ zakładki · A kup · B wyjdź':'←/→ zakładki · ↑/↓ wybór · Enter kup · Esc wyjdź',VW/2,Y+H-12,'#a89878',6,'center');}
 
