@@ -87,7 +87,13 @@ document.querySelectorAll('.tb').forEach(b=>{const a=b.dataset.a;
  b.addEventListener('pointerdown',e=>{initAudio();lastInput='touch';tc[a]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();e.stopPropagation();});
  const up=()=>{tc[a]=0;b.classList.remove('on');};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);});
 let taps=[];
-document.getElementById('wrap').addEventListener('pointerdown',e=>{initAudio();if(e.pointerType==='touch')lastInput='touch';const r=cv.getBoundingClientRect();taps.push({x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH});});
+let swipe=0;const drags={};
+const gpt=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};};
+document.getElementById('wrap').addEventListener('pointerdown',e=>{initAudio();if(e.pointerType==='touch')lastInput='touch';const p=gpt(e);drags[e.pointerId]={x0:p.x,y0:p.y,ly:p.y,moved:false};});
+window.addEventListener('pointermove',e=>{const d=drags[e.pointerId];if(!d)return;const p=gpt(e);if(Math.abs(p.y-d.y0)>6||Math.abs(p.x-d.x0)>10)d.moved=true;if(d.moved){swipe+=p.y-d.ly;d.ly=p.y;}});
+window.addEventListener('pointerup',e=>{const d=drags[e.pointerId];delete drags[e.pointerId];if(!d)return;if(!d.moved)taps.push({x:d.x0,y:d.y0});});
+window.addEventListener('pointercancel',e=>{delete drags[e.pointerId];});
+window.addEventListener('wheel',e=>{swipe-=Math.sign(e.deltaY)*16;},{passive:true});
 // gamepad
 const DEFPAD={jump:0,dash:1,attack:2,special:3,wheel:4,block:5,heal:6,dash2:7,pause:9};
 let padMap=Object.assign({},DEFPAD);
@@ -1694,9 +1700,11 @@ function campInput(){
  for(const t of taps)for(const r of campRects)if(tapHit(t,r)){
   if(r.k==='tab'){menu.tab=r.i;menu.sel=0;menu.scroll=0;sfx('sel');}
   else if(r.k==='item'){if(menu.sel===r.i)buy(items[r.i]);else{menu.sel=r.i;sfx('sel');}}
-  else if(r.k==='close'){closeCamp();}break;}
+  else if(r.k==='close'){closeCamp();}else if(r.k==='up'){menu.scroll=Math.max(0,menu.scroll-3);menu.sel=Math.min(menu.sel,menu.scroll+6);menu.sel=Math.max(menu.sel,menu.scroll);sfx('sel');menu.lockSel=1;}else if(r.k==='down'){menu.scroll=Math.min(Math.max(0,items.length-7),menu.scroll+3);menu.sel=Math.max(menu.sel,menu.scroll);sfx('sel');menu.lockSel=1;}break;}
  taps=[];
- const vis=7;if(menu.sel<menu.scroll)menu.scroll=menu.sel;if(menu.sel>=menu.scroll+vis)menu.scroll=menu.sel-vis+1;
+ const vis=7;
+ if(Math.abs(swipe)>=14){const st=Math.trunc(swipe/14);swipe-=st*14;menu.scroll=clamp(menu.scroll-st,0,Math.max(0,items.length-vis));menu.sel=clamp(menu.sel,menu.scroll,Math.min(items.length-1,menu.scroll+vis-1));}
+ else{if(menu.sel<menu.scroll)menu.scroll=menu.sel;if(menu.sel>=menu.scroll+vis)menu.scroll=menu.sel-vis+1;}
 }
 function buy(it){if(!it)return;if(menu.ro&&!it.cosmetic){sfx('deny');showToast('To tylko podgląd. Rozwój postaci, kowal i akcesoria — przy ognisku.');return;}if(it.state==='own')return;if(it.state==='can'){it.act();sfx('buy');burst(pcx(),pcy(),'#ffe070',10,1.5);saveGame(!menu.fromMap);}else sfx('deny');}
 function mapInput(){
@@ -2017,7 +2025,7 @@ function wTier(A){return Math.min(4,Math.floor(((P&&P.forge&&P.forge[A])||0)/2))
 const WLOOK={sword:[{b:'#a8acb8',g:'#8a6a40',L:12},{b:'#c8ccd8',g:'#c8964a',L:13},{b:'#b8d8f0',g:'#8a8a98',L:14,rune:'#60c0ff'},{b:'#eef0f8',g:'#e8c060',L:15,gem:'#e03040'},{b:'#ffe8a0',g:'#ffd040',L:16,gem:'#ff5030',glow:'#ffd060'}],
  axe:[{b:'#9a9aa4'},{b:'#c8ccd8'},{b:'#b8d8f0',dbl:1},{b:'#eef0f8',dbl:1,gold:1},{b:'#ffb070',dbl:1,gold:1,glow:'#ff9030'}],
  spear:[{b:'#a8acb8'},{b:'#d8c890'},{b:'#c8ccd8',tassel:'#c03030'},{b:'#eef0f8',tassel:'#e8c060',wing:1},{b:'#9fe0ff',tassel:'#60c0ff',wing:1,glow:'#9fe0ff'}],
- bow:[{w:'#6a4a2a',t:'#6a4a2a'},{w:'#7a5a34',t:'#c8ccd8'},{w:'#3a2a3a',t:'#c8ccd8',rec:1},{w:'#5a3a24',t:'#e8c060',rec:1,gold:1},{w:'#2a4a3a',t:'#9fffb0',rec:1,gold:1,glow:'#b8ffb0'}],
+ bow:[{w:'#6a4a2a',t:'#6a4a2a'},{w:'#7a5a34',t:'#c8ccd8'},{w:'#6a3a4a',t:'#c8ccd8',rec:1},{w:'#5a3a24',t:'#e8c060',rec:1,gold:1},{w:'#2a4a3a',t:'#9fffb0',rec:1,gold:1,glow:'#b8ffb0'}],
  magic:[{s:'#5a3a24',o:'#b080ff',r:1},{s:'#6a4a2a',o:'#c090ff',r:1},{s:'#3a2a4a',o:'#d0a0ff',r:2,cr:1},{s:'#2a1a3a',o:'#e0c0ff',r:2,cr:1,ring:1},{s:'#1a1030',o:'#ffffff',r:2,cr:1,ring:1,glow:'#c8a0ff'}]};
 function heroArm(p){
  const a=p.atk,A=p.arm||'sword',AC=(ARMS.find(x=>x.id===A)||ARMS[0]).c;let pose='rest';
@@ -2031,7 +2039,15 @@ function heroArm(p){
  if(pose==='block'){brace(3,9,3,5);R(5,6,4,12,HC.steelD);R(5,6,4,1,HC.steelHi);R(6,9,2,6,'#60d060');R(6,11,2,2,'#c0ffc0');return;}
  if(pose==='drink'){brace(2,7,2,4);R(2,3,3,4,'#d83030');R(2,3,3,1,'#ff9090');return;}
  if(pose==='cast'){brace(3,9,4,3);R(7,0,1,20,'#5a3a24');R(6,-3,3,3,'#b080ff');R(5,-4,5,5,'rgba(190,140,255,0.5)');mk();return;}
- if(A==='bow'){const WL=WLOOK.bow[wTier('bow')],ch=a&&a.kind==='bow'?Math.min(4,a.charge/10|0):0;brace(3,9,3,3);R(6,3,1,16,WL.w);R(7,2,1,1,WL.t);R(7,19,1,1,WL.t);if(WL.rec){R(8,1,1,1,WL.t);R(8,20,1,1,WL.t);}if(WL.gold){R(6,9,1,3,'#e8c060');}if(WL.glow&&frame%6<3)R(5,2,1,1,WL.glow);R(6-ch,10,1,1,'#ddd');R(6-ch,4,1,6,'#bbb');R(6-ch,11,1,7,'#bbb');if(pose==='draw'){R(0-ch,10,8,1,'#c8a070');R(7,9,2,3,'#ddd');}mk();return;}
+ if(A==='bow'){const WL=WLOOK.bow[wTier('bow')],ch=a&&a.kind==='bow'?Math.min(4,a.charge/10|0):0;
+  // łęczysko wybrzuszone w stronę celu: majdan z przodu (x=8), końce ramion z tyłu (x=5)
+  for(let k=-8;k<=8;k++){const x=5+Math.round((1-(k/8)*(k/8))*3),y=10+k,tip=Math.abs(k)>=7;R(x,y,1,1,tip?WL.t:(k<0?shade(WL.w,0.2):WL.w));if(Math.abs(k)<=1)R(x+1,y,1,1,WL.gold?'#e8c060':shade(WL.w,-0.3));}
+  if(WL.rec){R(6,1,1,1,WL.t);R(6,19,1,1,WL.t);}
+  // cięciwa: od końców ramion do punktu naciągu
+  const nx=5-ch;for(let y=2;y<=18;y++){const t=1-Math.abs(y-10)/8;R(Math.round(5+(nx-5)*t),y,1,1,'#d8d8d8');}
+  brace(6,9,3,3);
+  if(pose==='draw'){R(nx,10,13-nx,1,'#c8a070');R(13,9,2,3,'#e8e8f0');R(15,10,1,1,'#fff');R(nx-1,9,1,3,'#d04040');R(nx-1,10,2,1,HC.skin);}
+  if(WL.glow&&frame%6<3)R(8,2,1,1,WL.glow);mk();return;}
  if(A==='magic'){const WL=WLOOK.magic[wTier('magic')];brace(3,10,2,5);R(4,-2,1,22,WL.s);R(4,-2,1,1,shade(WL.s,0.3));if(WL.cr){R(2,-4,1,3,WL.o);R(6,-4,1,3,WL.o);}{const rr=WL.r+0.5;for(let a2=-2;a2<=2;a2++)for(let b2=-2;b2<=2;b2++)if(a2*a2+b2*b2<=rr*rr)R(4+a2,-4+b2,1,1,a2+b2<-1?shade(WL.o,0.35):a2+b2>1?shade(WL.o,-0.25):WL.o);}R(3,-5,1,1,'#fff');if(WL.ring){const an=frame*0.12;R(4+Math.round(Math.cos(an)*4),-4+Math.round(Math.sin(an)*2),1,1,'#fff');R(4-Math.round(Math.cos(an)*4),-4-Math.round(Math.sin(an)*2),1,1,WL.o);}if(frame%8<4)R(2,-6,5,5,'rgba(180,120,255,0.35)');if(WL.glow&&p===P&&frame%4===0)parts.push({x:DX+DF*4,y:DY-4,vx:rand(-0.3,0.3),vy:-0.5,life:16,max:16,c:WL.glow,s:1,g:0});mk();return;}
  // broń biała: prawdziwy zamach — ostrze obraca się wokół dłoni
  const prog=a&&a.kind!=='bow'&&a.kind!=='cast'?(a.t<=a.wind?0:a.t<=a.wind+a.act?(a.t-a.wind)/a.act:1):0;
@@ -2804,7 +2820,7 @@ function drawVictory(){victoryT++;ctx.fillStyle='rgba(10,6,4,0.35)';ctx.fillRect
  const L=CUR.loot||{ore:0};const rows=[];if(CUR.newSeal>=0)rows.push(['◆ '+SEALS[CUR.newSeal],SEALC[CUR.newSeal]]);rows.push(['◆ '+L.ore+' rudy dla kowala','#c8d8f0']);if(CUR.arena&&CUR.arena.mini)rows.push(['◆ '+MINIW[CUR.w][CUR.arena.mini][3],'#9fffb0']);if(L.gear)rows.push(['◆ '+GEAR[L.gear[0]][L.gear[1]].n+' ('+GEAR_SN[L.gear[0]].toLowerCase()+')','#ffe08a']);rows.push(['◆ '+stageGold+' zł z tej krainy','#ffe08a']);
  for(const [t,c] of rows){if(victoryT>20+rows.indexOf(rows.find(r=>r[0]===t))*25){txt(t,VW/2,y,c,8,'center');}y+=12;}
  if(victoryT>110)btn(150,150,100,18,'DALEJ',()=>{if(CUR.fin)go('win');else if(CUR.newSeal>=0)go('seal');else go('clear');});}
-function shopInput(){const items=shopItems();const n=items.length+1;
+function shopInput(){const items=shopItems();const n=items.length+1;if(Math.abs(swipe)>=14){const st=Math.trunc(swipe/14);swipe-=st*14;uiSel=clamp(uiSel-st,0,items.length-1);}
  if(pr('down')){uiSel=(uiSel+1)%n;sfx('sel');}if(pr('up')){uiSel=(uiSel+n-1)%n;sfx('sel');}
  if(pr('confirm')||pr('jump')||pr('attack')){if(uiSel===items.length){state='play';return;}const it=items[uiSel];if(it.state==='can'){it.act();sfx('buy');saveGame(true);}else sfx('deny');}
  if(pr('pause')||pr('back')){state='play';return;}
@@ -2897,7 +2913,7 @@ function drawCamp(){
  for(let j=0;j<Math.min(vis,items.length);j++){const i=j+menu.scroll;if(i>=items.length)break;const it=items[i],ry=Y+42+j*16,s=i===menu.sel;
   ctx.fillStyle=s?'rgba(255,190,90,0.2)':'rgba(255,255,255,0.03)';ctx.fillRect(X+8,ry,W-16,14);if(s){ctx.fillStyle='#ffcf70';ctx.fillRect(X+8,ry,2,14);}
   const col=it.state==='own'?'#9fd88f':it.state==='can'?'#fff0d0':'#8a7a68';if(it.icon)drawIcon(it.icon,X+13,ry+2);txt(it.label,X+(it.icon?27:14),ry+3,col,7);txt(it.right,X+W-14,ry+3,it.state==='can'?'#ffd060':col,7,'right');campRects.push({k:'item',i,x:X+8,y:ry,w:W-16,h:14});}
- if(items.length>vis){txt(menu.scroll>0?'▲':'',X+W-14,Y+34,'#a08a6a',7,'right');txt(menu.scroll+vis<items.length?'▼':'',X+W-14,Y+42+vis*16-2,'#a08a6a',7,'right');}
+ if(items.length>vis){if(menu.scroll>0){txt('▲',X+W-14,Y+34,'#ffd890',8,'right');campRects.push({k:'up',x:X+W-34,y:Y+30,w:28,h:12});}if(menu.scroll+vis<items.length){txt('▼ przewiń',X+W-14,Y+42+vis*16-1,'#ffd890',6,'right');campRects.push({k:'down',x:X+W-60,y:Y+42+vis*16-4,w:54,h:12});}}
  if(tabs[menu.tab].name==='POSTAĆ'){const px=X+W-74,py=Y+44;ctx.fillStyle='#120c08';ctx.fillRect(px,py,64,94);ctx.fillStyle='#3a2a1a';ctx.fillRect(px,py,64,1);ctx.fillRect(px,py+93,64,1);
   const sv={anim:P.anim,atk:P.atk,onGround:P.onGround,vx:P.vx,seat:P.seat,crouch:P.crouch,climb:P.climb,blocking:P.blocking,healT:P.healT,dashT:P.dashT,flash:P.flash,wall:P.wall};Object.assign(P,{atk:null,onGround:true,vx:0,seat:false,crouch:false,climb:false,blocking:false,healT:0,dashT:0,flash:0,wall:false});
   const c0=cx0,c1=cy0;cx0=0;cy0=0;ctx.save();ctx.translate(px+32,py+6);ctx.scale(2,2);applyLook(PROF.look);spr(heroBody,P,0,0,1);ctx.restore();cx0=c0;cy0=c1;Object.assign(P,sv);
@@ -2937,7 +2953,7 @@ function updatePlay(){
  updCam();if(shake>0)shake=Math.max(0,shake-0.6);if(flashT>0)flashT--;
 }
 function update(){
- compose();frame++;if(toastT>0)toastT--;
+ compose();frame++;if(toastT>0)toastT--;if(state!=='camp'&&state!=='shop')swipe=0;
  switch(state){
   case 'play':updatePlay();break;
   case 'camp':campInput();break;
