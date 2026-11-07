@@ -1400,7 +1400,7 @@ function knightUpd(e){
 upd.lord=knightUpd;upd.jarl=knightUpd;upd.exec=knightUpd;
 const FORMS={troll:['GRUCHACZ ROZWŚCIECZONY'],witch:['MORWENA, KRÓLOWA MROKU'],worm:['GNILEC — PRZEBUDZONY POŻERACZ'],jarl:['HROFT, ZIMOWE SERCE'],exec:['MORAG — KAT BEZ GŁOWY'],lord:['LORD PŁONĄCY','LORD SKRZYDLATY','POPIÓŁ — PRAWDZIWA POSTAĆ']};
 function transformBoss(e){e.burn=0;e.slow=0;e.form=(e.form||1)+1;e.hp=1;e.state='transform';e.t=0;e.invuln=true;e.vx=0;e.vy=0;shots=[];shake=9;flashT=7;sfx('roar');setTimeout(()=>sfx('boom'),400);
- const n=e.mini?e.name+' — WŚCIEKŁY':FORMS[e.type]?FORMS[e.type][e.form-2]:e.name;e.name=n;banner={a:n,b:e.mini?'Przeciwnik wpada w szał!':e.form>=e.forms?'Ostatnia forma!':'Przemiana!',t:160};burst(ecx(e),e.y+e.h/2,'#ffd060',40,4);
+ const n=e.mini?e.name+' — WŚCIEKŁY':FORMS[e.type]?FORMS[e.type][e.form-2]:e.name;e.name=n;ftext(ecx(e),e.y-14,e.mini?'SZAŁ!':e.form>=e.forms?'OSTATNIA FORMA!':'PRZEMIANA!','#ff7060',true);burst(ecx(e),e.y+e.h/2,'#ffd060',40,4);
  for(const x of ents)if(x.summoned&&!x.dead)x.dead=true;}
 function finishTransform(e){if(e.mini){e.maxHp=Math.round(e.baseMax*0.6);e.hp=e.maxHp;e.invuln=false;e.dm*=1.25;e.enr=true;e.state=homeState(e);e.t=0;e.cd=20;return;}const base=e.baseMax||e.maxHp;e.baseMax=base;e.maxHp=Math.round(base*(e.type==='lord'?0.75+0.15*e.form:0.85));e.hp=e.maxHp;e.invuln=false;e.dm*=1.18;
  if(e.type==='lord'){if(e.form===3){e.aiType='witch';e.ax=e.x;e.ay=arena.row*T-100;e.alpha=1;e.state='float';e.t=0;return;}
@@ -1422,7 +1422,7 @@ function startBoss(){arena.started=true;lockGate(true);const t=arena.boss;
 const SUMMON=[['goblin','skeleton'],['frostling','skeleton'],['imp','magmaling'],['voidling','puppet'],['ghoul','skeleton'],['skeleton','imp']];
 function bossSummon(e){e.sumT=(e.sumT||0)+1;if(e.sumT<Math.round(600*D.react))return;e.sumT=0;const alive=ents.filter(x=>x.summoned&&!x.dead).length;if(alive>=3)return;
  const L=SUMMON[CUR.fin?5:Math.min(4,CUR.w)];for(let i=0;i<2;i++){const sx=(i?arena.x1-2:arena.x0+2)*T+8,m=mkEnemy(L[i%L.length],sx,arena.row*T);m.summoned=true;m.state=homeState(m);m.face=i?-1:1;m.xp=Math.round(m.xp*0.3);m.gold=0;ents.push(m);burst(sx,arena.row*T-10,'#a3f',12,2);}
- banner={a:'POSIŁKI!',b:e.name+' wzywa sługi',t:90};sfx('magic');}
+ ftext(ecx(e),e.y-12,'POSIŁKI!','#c8a0ff',true);sfx('magic');}
 function embedded(e){for(let x=e.x+2;x<=e.x+e.w-2;x+=3)for(let y=e.y+2;y<=e.y+e.h-2;y+=3)if(solidAt(Math.floor(x/T),Math.floor(y/T)))return true;return false;}
 function fixCeil(e){// nikt nie może zaczynać w suficie ani nad nim
  for(const px of [e.x+2,e.x+e.w-2]){const cx=Math.floor(px/T);let cb=0;while(cb<MH&&solidAt(cx,cb))cb++;if(cb>0&&cb<MH-2&&e.y<cb*T+2)e.y=cb*T+2;}if(e.y<2)e.y=2;}
@@ -1448,11 +1448,11 @@ function bossSpecial(e){// zwraca true, gdy przejmuje sterowanie
   if(e.t>44){e.state=homeState(e);e.t=0;e.cd=30;}return true;}
  if(e.pullT>0){e.pullT--;if(!P.dead)P.vx+=Math.sign(ecx(e)-pcx())*0.32;if(frame%3===0)parts.push({x:pcx()+rand(-4,4),y:pcy(),vx:Math.sign(ecx(e)-pcx())*2,vy:0,life:12,max:12,c:'#c8f',s:1,g:0});}
  if(e.chT>0){e.chT--;e.face=e.chD;e.vx=e.chD*4.2;moveX(e,e.vx);if(wallAhead(e,e.chD))e.chT=0;if(overlap(e,P)&&P.inv<=0)hurtPlayer(16*e.dm,ecx(e));if(frame%2===0)dust(ecx(e)-e.chD*8,e.y+e.h,1);return true;}
- e.abT=(e.abT||0)+1;if(e.abT>Math.round((e.enr?220:330)*D.react)&&e.state!=='transform'&&e.onGround!==false&&Math.abs(pcx()-ecx(e))<260){e.abT=0;e.state='ability';e.t=0;e.vx=0;banner={a:AB_NAME[e.ab]||'!',b:e.name,t:70};}
+ e.abT=(e.abT||0)+1;if(e.abT>Math.round((e.enr?220:330)*D.react)&&e.state!=='transform'&&e.onGround!==false&&Math.abs(pcx()-ecx(e))<260){e.abT=0;e.state='ability';e.t=0;e.vx=0;ftext(ecx(e),e.y-12,AB_NAME[e.ab]||'!','#ffb060',true);}
  return false;}
 function heartDrop(x,y){items.push({type:'meat',heart:true,x:x-5,y,w:10,h:9,vx:rand(-1.2,1.2),vy:-3.2,t:0});}
 function bossHeartDrop(e,d){// serca w walce z bossem: co pewną porcję zadanych obrażeń, częściej gdy gracz ma mało zdrowia
- e.hAcc=(e.hAcc||0)+d;const low=P.hp<P.maxHp*0.4,need=e.baseMax*(e.mini?0.28:0.2)*(low?0.6:1);
+ e.hAcc=(e.hAcc||0)+d;const need=e.baseMax*(e.mini?0.25:0.18);
  if(e.hAcc>=need&&items.filter(i=>i.heart).length<2){e.hAcc=0;heartDrop(ecx(e),e.y+e.h*0.3);ftext(ecx(e),e.y-14,'♥','#ff6070');}}
 function bossHeartTimer(){if(!boss||boss.dead||state!=='play')return;boss.hT=(boss.hT||0)+1;// gdy gracz walczy długo na resztce zdrowia, serce spada z góry areny
  if(boss.hT>Math.round(1100*D.react)&&P.hp<P.maxHp*0.35&&!items.some(i=>i.heart)){boss.hT=0;const x=clamp(pcx()+rand(-60,60),arena.px0+20,arena.px1-20);heartDrop(x,cy0+10);}}
@@ -1472,7 +1472,7 @@ function smartDodge(e){// zwykli wrogowie: unikają spadającego z góry gracza 
  for(const s of pshots)if(s.type==='arrow'&&!s.stuck&&Math.abs(s.y-(e.y+e.h-8))<10&&Math.sign(ecx(e)-s.x)===Math.sign(s.vx)&&Math.abs(ecx(e)-s.x)<46&&Math.random()<0.12*(D.dodge?1.5:0.5)){e.dodgeCd=90;e.vy=-4;break;}}
 function homeState(e){const A=ETYPES[e.type].ai;return (A==='flyer'||A==='diver')?'fly':A==='thrower'?'aim':A==='turret'?'patrol':A==='brawler'?'chase':e.type==='bat'||e.type==='gargoyle'?'fly':e.type==='shaman'?'idle':e.type==='bomber'?'aim':e.type==='archer'?'kite':e.type==='wolf'?'stalk':e.type==='toad'?'aim':e.type==='cultist'?'idle':e.type==='wraith'?'float':e.type==='imp'?'hop':'chase';}
 function updEnemy(e){
- if(e.dodgeCd>0)e.dodgeCd--;if(e.defCd>0)e.defCd--;if(e===boss)bossHeartTimer();
+ if(e.dodgeCd>0)e.dodgeCd--;if(e.defCd>0)e.defCd--;
  if(e.isBoss&&bossSpecial(e))return;
  smartDodge(e);
  if(ETYPES[e.type].fly&&!e.isBoss&&frame%3===0&&embedded(e)){const ty=pcy()-(e.y+e.h/2),tx=pcx()-ecx(e);e.y+=Math.sign(ty)*2;e.x+=Math.sign(tx)*1;e.stuckT=(e.stuckT||0)+1;if(e.stuckT>(e.type==='wraith'?150:90)){unstick(e);e.stuckT=0;}}
